@@ -14,6 +14,7 @@
 
 #include <linux/mm.h>
 #include <linux/cpu.h>
+#include <linux/device.h>
 #include <linux/nmi.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -206,6 +207,7 @@ static unsigned long __read_mostly hardlockup_thresh;
 static DEFINE_PER_CPU(unsigned long, watchdog_touch_ts);
 static DEFINE_PER_CPU(unsigned long, hardlockup_touch_ts);
 static DEFINE_PER_CPU(struct hrtimer, watchdog_hrtimer);
+static DEFINE_PER_CPU(unsigned int, watchdog_en);
 static DEFINE_PER_CPU(bool, softlockup_touch_sync);
 static DEFINE_PER_CPU(bool, soft_watchdog_warn);
 static DEFINE_PER_CPU(unsigned long, hrtimer_interrupts);
@@ -556,15 +558,23 @@ static enum hrtimer_restart watchdog_timer_fn(struct hrtimer *hrtimer)
 	return HRTIMER_RESTART;
 }
 
-static void watchdog_enable(unsigned int cpu)
+/* Must be called with hotplug lock (lock_device_hotplug()) held. */
+void watchdog_enable(unsigned int cpu)
 {
 	struct hrtimer *hrtimer = this_cpu_ptr(&watchdog_hrtimer);
 	struct completion *done = this_cpu_ptr(&softlockup_completion);
+	unsigned int *enabled = this_cpu_ptr(&watchdog_en);
 
 	WARN_ON_ONCE(cpu != smp_processor_id());
 
 	init_completion(done);
 	complete(done);
+
+	lock_device_hotplug_assert();
+
+	if (*enabled)
+		return;
+	*enabled = 1;
 
 	/*
 	 * Start the timer first to prevent the NMI watchdog triggering
@@ -582,9 +592,17 @@ static void watchdog_enable(unsigned int cpu)
 		watchdog_nmi_enable(cpu);
 }
 
-static void watchdog_disable(unsigned int cpu)
+/* Must be called with hotplug lock (lock_device_hotplug()) held. */
+void watchdog_disable(unsigned int cpu)
 {
 	struct hrtimer *hrtimer = this_cpu_ptr(&watchdog_hrtimer);
+	unsigned int *enabled = this_cpu_ptr(&watchdog_en);
+
+	lock_device_hotplug_assert();
+
+	if (!*enabled)
+		return;
+	*enabled = 0;
 
 	WARN_ON_ONCE(cpu != smp_processor_id());
 
