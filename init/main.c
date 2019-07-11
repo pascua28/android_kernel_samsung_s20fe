@@ -812,6 +812,7 @@ void kdp_init(void)
 }
 #endif
 
+void __init init_sync_kmem_pool(void);
 void __init init_dma_buf_kmem_pool(void);
 asmlinkage __visible void __init start_kernel(void)
 {
@@ -1036,6 +1037,7 @@ asmlinkage __visible void __init start_kernel(void)
 	cgroup_init();
 	taskstats_init_early();
 	delayacct_init();
+	init_sync_kmem_pool();
 	init_dma_buf_kmem_pool();
 
 	check_bugs();
