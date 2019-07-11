@@ -1148,6 +1148,7 @@ static struct platform_driver cam_sync_driver = {
 static int __init cam_sync_init(void)
 {
 	int rc;
+	kmem_payload_pool = KMEM_CACHE(sync_user_payload, SLAB_HWCACHE_ALIGN | SLAB_PANIC);
 
 	kmem_payload_pool = KMEM_CACHE(sync_user_payload, SLAB_HWCACHE_ALIGN | SLAB_PANIC);
 
@@ -1165,6 +1166,7 @@ static void __exit cam_sync_exit(void)
 	for (idx = 0; idx < CAM_SYNC_MAX_OBJS; idx++)
 		spin_lock_init(&sync_dev->row_spinlocks[idx]);
 	platform_driver_unregister(&cam_sync_driver);
+	kmem_cache_destroy(kmem_payload_pool);
 	platform_device_unregister(&cam_sync_device);
 	kfree(sync_dev);
 
