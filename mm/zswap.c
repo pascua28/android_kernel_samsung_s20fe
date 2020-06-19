@@ -843,7 +843,7 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 
 	/* find and ref zswap entry */
 	spin_lock(&tree->lock);
-	entry = zswap_entry_find_get(&tree->rbroot, offset);
+	entry = zswap_entry_find_get(&tree->head, offset);
 	if (!entry) {
 		/* entry was invalidated */
 		spin_unlock(&tree->lock);
@@ -893,7 +893,7 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 
 	spin_lock(&tree->lock);
 	/* drop local reference */
-	zswap_entry_put(tree, entry);
+	zswap_entry_put(&tree->head, entry);
 
 	/*
 	* There are two possible situations for entry here:
@@ -902,8 +902,8 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 	*     because invalidate happened during writeback
 	*  search the tree and free the entry if find entry
 	*/
-	if (entry == zswap_rb_search(&tree->rbroot, offset))
-		zswap_entry_put(tree, entry);
+	if (entry == zswap_search(&tree->head, offset))
+		zswap_entry_put(&tree->head, entry);
 	spin_unlock(&tree->lock);
 
 	goto end;
@@ -917,7 +917,7 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 	*/
 fail:
 	spin_lock(&tree->lock);
-	zswap_entry_put(tree, entry);
+	zswap_entry_put(&tree->head, entry);
 	spin_unlock(&tree->lock);
 
 end:
