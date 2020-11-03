@@ -3279,6 +3279,7 @@ out:
 	return rc;
 }
 
+
 /* host lock must be held before calling this variant */
 static void __ufshcd_hibern8_release(struct ufs_hba *hba, bool no_sched)
 {
