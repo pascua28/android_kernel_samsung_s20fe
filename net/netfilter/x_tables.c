@@ -1389,6 +1389,7 @@ xt_replace_table(struct xt_table *table,
 	}
 
 	newinfo->initial_entries = private->initial_entries;
+
 	rcu_assign_pointer(table->private, newinfo);
 	synchronize_rcu();
 
