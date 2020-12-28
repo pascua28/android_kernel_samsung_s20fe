@@ -2244,6 +2244,11 @@ out:
 	return ret;
 }
 
+static void ufs_qcom_testbus_read(struct ufs_hba *hba)
+{
+	ufs_qcom_dump_regs(hba, UFS_TEST_BUS, 1, "UFS_TEST_BUS ");
+}
+
 static void ufs_qcom_print_unipro_testbus(struct ufs_hba *hba)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
