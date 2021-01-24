@@ -1269,7 +1269,7 @@ static int qbt2000_read_device_tree(struct platform_device *pdev,
 			(const char **)&drvdata->sensor_position))
 		drvdata->sensor_position = "13.77,0.00,9.00,4.00,14.80,14.80,11.00,11.00,5.00";
 	pr_info("Sensor Position: %s\n", drvdata->sensor_position);
-	
+
 	if (of_property_read_string_index(pdev->dev.of_node, "qcom,modelinfo", 0,
 			(const char **)&drvdata->model_info)) {
 		drvdata->model_info = "NONE";
