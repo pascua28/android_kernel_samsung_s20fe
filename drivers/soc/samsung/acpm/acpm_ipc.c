@@ -560,7 +560,6 @@ int __acpm_ipc_send_data(unsigned int channel_id, struct ipc_config *cfg, bool w
 			pr_err("[ACPM IPC] sequence number full! error!!!\n");
 			BUG();
 		}
-
 	} while (channel->seq_num_flag[tmp_seq_num]);
 
 	channel->seq_num = tmp_seq_num;
