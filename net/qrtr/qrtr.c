@@ -1649,6 +1649,7 @@ static int qrtr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	skb = sock_alloc_send_skb(sk, plen + QRTR_HDR_MAX_SIZE,
 				  msg->msg_flags & MSG_DONTWAIT, &rc);
 	if (!skb) {
+		rc = -ENOMEM;
 		QRTR_INFO_NEW(qrtr_ilc, " skb alloc failed in qrtr_resume_tx");
 		goto out_node;
 	}
