@@ -17,6 +17,8 @@
 #include <trace/events/power.h>
 #include <linux/sched/sysctl.h>
 
+#include <linux/battery_saver.h>
+
 #ifdef CONFIG_SCHED_FFSI_GLUE
 #include <linux/ffsi.h>
 /**
@@ -608,7 +610,7 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, u64 time,
 		return;
 
 	/* Boost only tasks waking up after IO */
-	if (!set_iowait_boost)
+	if (!set_iowait_boost || is_battery_saver_on())
 		return;
 
 	/* Ensure boost doubles only one time at each request */
