@@ -4,11 +4,11 @@
 #
 
 #
-# Compiler: Ubuntu clang version 12.0.0-3ubuntu1~20.04.4
+# Compiler: Android (7485623, based on r416183b1) clang version 12.0.7 (https://android.googlesource.com/toolchain/llvm-project c935d99d7cf2016289302412d708641d52d2f7ee)
 #
 CONFIG_GCC_VERSION=0
 CONFIG_CC_IS_CLANG=y
-CONFIG_CLANG_VERSION=120000
+CONFIG_CLANG_VERSION=120007
 CONFIG_CC_HAS_ASM_GOTO=y
 CONFIG_IRQ_WORK=y
 CONFIG_BUILDTIME_EXTABLE_SORT=y
@@ -6728,11 +6728,7 @@ CONFIG_MESSAGE_LOGLEVEL_DEFAULT=4
 #
 # Compile-time checks and compiler options
 #
-CONFIG_DEBUG_INFO=y
-# CONFIG_DEBUG_INFO_REDUCED is not set
-# CONFIG_DEBUG_INFO_SPLIT is not set
-# CONFIG_DEBUG_INFO_DWARF4 is not set
-# CONFIG_GDB_SCRIPTS is not set
+# CONFIG_DEBUG_INFO is not set
 CONFIG_ENABLE_MUST_CHECK=y
 CONFIG_FRAME_WARN=2048
 # CONFIG_STRIP_ASM_SYMS is not set
