@@ -20,11 +20,14 @@ if [ $variant == "1" ]; then
 	echo "
 Compiling for 4G variant
 "
+	MODEL="G780G"
 
 elif [ $variant == "2" ]; then
 	echo "
 Compiling for 5G variant
 "
+	MODEL="G781B"
+
 	scripts/configcleaner "
 CONFIG_SAMSUNG_NFC
 CONFIG_NFC_PN547
@@ -46,3 +49,13 @@ make -j8 -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD
 fi
 
 make -j8 -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE CC=$KERNEL_LLVM_BIN CLANG_TRIPLE=$CLANG_TRIPLE
+
+IMAGE="out/arch/arm64/boot/Image.gz-dtb"
+
+if [[ -f "$IMAGE" ]]; then
+	rm AnyKernel3/zImage > /dev/null 2>&1
+	rm AnyKernel3/*.zip > /dev/null 2>&1
+	cp $IMAGE AnyKernel3/zImage
+	cd AnyKernel3
+	zip -r9 Kernel-$MODEL.zip .
+fi
