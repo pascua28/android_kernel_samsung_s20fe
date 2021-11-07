@@ -12,13 +12,13 @@ CLANG_TRIPLE=aarch64-linux-gnu-
 make O=out ARCH=arm64 CC=$KERNEL_LLVM_BIN exynos9830-r8slte_defconfig
 make O=out ARCH=arm64 \
 	CROSS_COMPILE=$BUILD_CROSS_COMPILE CC=$KERNEL_LLVM_BIN \
-	CLANG_TRIPLE=$CLANG_TRIPLE -j8 Image.gz
+	CLANG_TRIPLE=$CLANG_TRIPLE -j8
 
-IMAGE="out/arch/arm64/boot/Image.gz"
+IMAGE="out/arch/arm64/boot/Image"
 if [[ -f "$IMAGE" ]]; then
-	rm AnyKernel3/Image.gz > /dev/null 2>&1
+	rm AnyKernel3/zImage > /dev/null 2>&1
 	rm AnyKernel3/*.zip > /dev/null 2>&1
-	cp $IMAGE AnyKernel3/Image.gz
+	cp $IMAGE AnyKernel3/zImage
 	cd AnyKernel3
 	zip -r9 Kernel-G780F.zip .
 fi
