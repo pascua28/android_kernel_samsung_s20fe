@@ -1,0 +1,56 @@
+/*
+ * Samsung's Picasso SoC soundcard device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+#include "exynos9830-hubble_sound.dtsi"
+
+
+/ {
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			sound {
+				/delete-property/ pinctrl-names;
+				/delete-property/ pinctrl-0;
+				/delete-property/ samsung,routing;
+
+				samsung,routing = "DMIC1", "MICBIAS1",
+					"DMIC2", "MICBIAS2",
+					"DMIC3", "MICBIAS2",
+					"RECEIVER", "Left AMP SPK",
+					"SPEAKER", "Right AMP SPK",
+					"BLUETOOTH SPK", "ABOX UAIF3 Playback",
+					"ABOX UAIF3 Capture", "BLUETOOTH MIC",
+					"USB SPK", "ABOX USB Playback",
+					"ABOX USB Capture", "USB MIC",
+					"FWD SPK", "ABOX FWD Playback",
+					"ABOX FWD Capture", "FWD MIC",
+					"VTS Virtual Output", "VTS Virtual Output Mux",
+					"PAD DPDM", "DMIC1",
+					"PAD DPDM", "DMIC2",
+					"PAD DPDM", "DMIC3";
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&micbias1 {
+	/delete-property/ gpio;
+	/delete-property/ enable-active-high;
+	/delete-property/ vin-supply;
+	vin-supply = <&ldo13_reg>;
+};
+
+&micbias2 {
+	/delete-property/ regulator-name;
+	/delete-property/ vin-supply;
+	regulator-name = "sub_3rd_micbias_1p8";
+	vin-supply = <&ldo14_reg>;
+};

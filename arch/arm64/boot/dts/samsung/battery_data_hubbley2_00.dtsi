@@ -1,0 +1,112 @@
+/* SAMSUNG UNIVERSAL9830 board device tree source
+ *
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "battery_data_hubble_common.dtsi"
+
+/ {
+	fragment@battery {
+		target-path = "/";
+		__overlay__ {
+			battery {
+				battery,temp_table_adc = <311 360 416 483 562 655 763 889 1033 1162 1340 1539
+					1754 1978 2219 2459 2698 2922 3123 3304 3465 3588 3679>;
+				battery,temp_table_data = <900 850 800 750 700 650 600 550 500 450 400 350
+					300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,usb_temp_table_adc = <268 326 384 453 532 624 733 859 1001 1161 1356 1558
+					1774 2000 2235 2470 2692 2913 3100 3278 3431 3539 3665>;
+				battery,usb_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400 350
+					300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,chg_temp_table_adc = <221 276 331 398 474 564 667 794 935 1096 1285 1489
+					1711 1945 2185 2428 2665 2895 3103 3291 3446 3568 3701>;
+				battery,chg_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400 350
+					300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,wpc_temp_table_adc = <311 360 416 483 562 655 763 889 1033 1162 1340 1539
+					1754 1978 2219 2459 2698 2922 3123 3304 3465 3588 3679>;
+				battery,wpc_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400 350
+					300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,dchg_temp_table_adc = <89148 112608 136068 164220 197064 236946 283866 337824 401166 471546 548964 640458
+					736644 842214 947784 1058046 1163616 1264494 1358334 1440444 1510824 1569474 1618740>;
+				battery,dchg_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400 350
+					300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,temp_check_type = <0>; /* SEC_BATTERY_TEMP_CHECK_TEMP */
+				battery,usb_temp_check_type = <0>;
+				battery,chg_temp_check_type = <0>;
+				battery,wpc_temp_check_type = <0>;
+				battery,dchg_temp_check_type = <0>;
+
+				battery,wpc_high_temp = <400>;
+				battery,wpc_high_temp_recovery = <380>;
+				battery,wpc_lcd_on_high_temp = <400>;
+				battery,wpc_lcd_on_high_temp_rec = <380>;
+
+				battery,dc_step_chg_cond_vol = <4120 4210 4380>; /*<25w 3step> STEP_CHARGING_CONDITION_VOLTAGE */ 
+				battery,dc_step_chg_cond_iin = <2030 1635 0>; /* <25w 3step> STEP_CHARGING_CONDITION_INPUT_CURRENT */
+				battery,dc_step_chg_val_vfloat = <4120 4210 4380>; /* <25w 3step> STEP_CHARGING_CONDITION_FLOAT_VOLTAGE */
+				battery,dc_step_chg_val_iout = <5280 4060 3250>; /* <25w 3step> */
+				battery,dc_step_chg_cond_soc = <20 50 100 20 50 100 20 50 100 20 50 100 20 50 100>; /* <25w 3step> STEP_CHARGING_CONDITION_SOC */
+
+				battery,snkcap_data = /bits/ 8 <0x04 0x2C 0x91 0x01 0x36 0xC8 0xD0 0x02 0x00 0xC8 0x90
+								0x41 0x8B 0x35 0x21 0xDC 0xC0>;
+			};
+
+			max77705-fuelgauge {
+				fuelgauge,v_empty = <0xAA64>;
+				fuelgauge,qrtable20 = <0x2800>;
+				fuelgauge,qrtable30 = <0x2300>;
+				fuelgauge,capacity = <0x0FF8>;
+			};
+
+			cable-info {
+				full_check_current_1st = <655>;
+				full_check_current_2nd = <218>;
+			};
+
+			wireless-power-info {
+				current_group_3 {
+					input_current_limit = <1200>;
+					rx_power = <13200>;
+				};
+			};
+		};
+	};
+};
+
+#define FOD_FLAG_NONE			0
+#define FOD_FLAG_ADD			1
+#define FOD_FLAG_USE_CC			2
+#define FOD_FLAG_USE_DEFAULT	3
+#define SET_FOD_CC(_flag)		(FOD_FLAG_ ##_flag)
+#define SET_FOD_CV(_flag)		(FOD_FLAG_ ##_flag << 4)
+#define SET_FOD_FULL(_flag)		(FOD_FLAG_ ##_flag << 8)
+
+&hsi2c_6 {
+	mfc-charger@3b {
+		fod_list {
+			count = <2>;
+
+			pad_0x00 { /* DEFAULT */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(ADD))>;
+				cc = <150 64 142 53 150 38 150 34 155 18 156 17>;
+				cv = <150 94 142 83 150 68 150 64 155 48 156 47>;
+				full = <255 127 255 127 255 127 255 127 255 127 255 127>;
+			};
+
+			pad_0x30 { /* HERO PAD */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(USE_CC) | SET_FOD_FULL(USE_DEFAULT))>;
+				cc = <150 2 142 (-6) 150 (-20) 150 (-28) 165 185 156 (-39)>;
+			};
+		};
+	};
+};

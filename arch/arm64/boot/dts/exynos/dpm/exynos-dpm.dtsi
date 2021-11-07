@@ -1,0 +1,124 @@
+/*
+ * SAMSUNG EXYNOS SoC device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * SAMSUNG EXYNOS SoC device nodes are listed in this file.
+ * EXYNOS9830 based board files can include this file and provide
+ * values for board specfic bindings.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include <dt-bindings/soc/samsung/debug-snapshot-def.h>
+
+///dts-v1/;
+
+/ {
+//	fragment@debug_policy {
+//		target-path = "/";
+//		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			dpm {
+				version = <100>;
+				chip-id = <9830>;
+
+				security {
+					cp_mem_not_clear	= <0>;
+					dbg_mem_enable		= <0>;
+					seh_enable		= <0>;
+					pm_test_enable		= <0>;
+					seclog_enable		= <0>;
+					sdm_enable		= <0>;
+				};
+
+				feature {
+					/* debug feature */
+					debug {
+						enabled = <1>;
+					};
+
+					/* dump-mode support */
+					dump-mode {
+						enabled = <1>;
+						file-support = <0>;
+					};
+
+					/* DebugSnapshot logging */
+					dss {
+						method = DSS_ITEM_KERNEL,			/* enabled */
+							 DSS_ITEM_PLATFORM,			/* enabled */
+							 DSS_ITEM_KEVENTS,			/* enabled */
+							 DSS_ITEM_FATAL,			/* enabled */
+							 DSS_ITEM_PSTORE,			/* enabled */
+							 DSS_ITEM_SFR,				/* enabled */
+							 DSS_ITEM_S2D,				/* enabled */
+							 DSS_ITEM_ARRDUMP_RESET,		/* enabled */
+							 DSS_ITEM_ARRDUMP_PANIC,		/* enabled */
+							 DSS_ITEM_ETM,				/* enabled */
+							 DSS_ITEM_BCM,				/* enabled */
+							 DSS_ITEM_LLC,				/* enabled */
+							 DSS_ITEM_DBGC;				/* enabled */
+						event {
+							method = DSS_LOG_TASK,			/* enabled */
+								 DSS_LOG_WORK,			/* enabled */
+								 DSS_LOG_CPUIDLE,		/* enabled */
+								 DSS_LOG_SUSPEND,		/* enabled */
+								 DSS_LOG_IRQ,			/* enabled */
+								 DSS_LOG_SPINLOCK,		/* enabled */
+								/*  DSS_LOG_IRQ_DISABLED, */	/* disabled */
+								 DSS_LOG_REG,			/* enabled */
+								 DSS_LOG_HRTIMER,		/* enabled */
+								 DSS_LOG_CLK,			/* enabled */
+								 DSS_LOG_PMU,			/* enabled */
+								 DSS_LOG_FREQ,			/* enabled */
+								 DSS_LOG_DM,			/* enabled */
+								 DSS_LOG_REGULATOR,		/* enabled */
+								 DSS_LOG_THERMAL,		/* enabled */
+								 DSS_LOG_I2C,			/* enabled */
+								 DSS_LOG_SPI,			/* enabled */
+								 DSS_LOG_BINDER,		/* enabled */
+								 DSS_LOG_ACPM,			/* enabled */
+								 DSS_LOG_PRINTK,		/* enabled */
+								 DSS_LOG_PRINTKL;		/* enabled */
+						};
+					};
+				};
+
+				policy {
+					exception {
+						pre_log		= <1>;
+
+						el1_da		= <GO_DEFAULT_ID>;
+						el1_ia 		= <GO_DEFAULT_ID>;
+						el1_undef 	= <GO_DEFAULT_ID>;
+						el1_sp_pc 	= <GO_DEFAULT_ID>;
+						el1_inv 	= <GO_DEFAULT_ID>;
+						el1_serror 	= <GO_DEFAULT_ID>;
+					};
+
+					itmon {
+						err_fatal		= <GO_S2D_ID>;
+						err_drex_tmout		= <GO_S2D_ID>;
+						err_ip			= <GO_PANIC_ID>;
+						err_cpu			= <GO_DEFAULT_ID>;
+						err_cp			= <GO_DEFAULT_ID>;
+						err_chub		= <GO_DEFAULT_ID>;
+					};
+				};
+
+				config {
+					itmon {
+						panic_count	= <3>;
+						panic_count_cpu = <3>;
+					};
+				};
+			}; /* end of dpm */
+//		}; /* end of __overlay__ */
+//	}; /* end of fragment */
+}; /* end of root */

@@ -1,0 +1,118 @@
+/*
+ * Samsung's Picasso SoC soundcard device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+#include "exynos9830-hubble_sound.dtsi"
+
+
+/ {
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			sound {
+
+				/delete-property/ MICBIAS3-supply;
+				/delete-property/ samsung,routing;
+
+				samsung,routing = "DMIC1", "MICBIAS1",
+					"DMIC2", "MICBIAS2",
+					"RECEIVER", "Left AMP SPK",
+					"SPEAKER", "Right AMP SPK",
+					"BLUETOOTH SPK", "ABOX UAIF3 Playback",
+					"ABOX UAIF3 Capture", "BLUETOOTH MIC",
+					"USB SPK", "ABOX USB Playback",
+					"ABOX USB Capture", "USB MIC",
+					"FWD SPK", "ABOX FWD Playback",
+					"ABOX FWD Capture", "FWD MIC",
+					"VTS Virtual Output", "VTS Virtual Output Mux",
+					"PAD DPDM", "DMIC1",
+					"PAD DPDM", "DMIC2";
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&micbias3 {
+	status = "disabled";
+};
+&pinctrl_5 {
+        aud_i2s3_default_common: aud-i2s3-default-common {
+		samsung,pins = "gpb1-4", "gpb1-5", "gpb1-6";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <1>;
+	};
+	aud_i2s3_default_in: aud-i2s3-default-in {
+		samsung,pins = "gpb1-7";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+	};
+        aud_i2s3_active_common: aud-i2s3-active-common {
+		samsung,pins = "gpb1-4", "gpb1-5", "gpb1-6";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+	};
+	aud_i2s3_active_in: aud-i2s3-active-in {
+		samsung,pins = "gpb1-7";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+	};
+        aud_i2s3_idle_common: aud-i2s3-idle-common {
+		samsung,pins = "gpb1-4", "gpb1-5", "gpb1-6";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+	};
+	aud_i2s3_idle_in: aud-i2s3-idle-in {
+		samsung,pins = "gpb1-7";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <0>;
+	};
+};
+
+&pinctrl_6 {
+	dmic_bus_clk2_nc: dmic-bus-clk2-nc {
+		samsung,pins = "gpv0-2";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+		samsung,pin-con-pdn = <2>;
+	};
+	dmic_pdm2_nc: dmic-pdm2-nc {
+		samsung,pins = "gpv0-5";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+		samsung,pin-con-pdn = <2>;
+	};
+};
+
+&vts {
+	/delete-property/ pinctrl-6;
+	/delete-property/ pinctrl-7;
+	/delete-property/ pinctrl-8;
+	/delete-property/ pinctrl-9;
+
+	pinctrl-6 = <&dmic_bus_clk2_nc &dmic_pdm2_nc>;
+	pinctrl-7 = <&dmic_bus_clk2_nc &dmic_pdm2_nc>;
+	pinctrl-8 = <&dmic_bus_clk &dmic_bus_clk1
+		&dmic_bus_clk2_nc &dmic_pdm
+		&dmic_pdm1_bus &dmic_pdm2_nc>;
+	pinctrl-9 = <&dmic_bus_clk_idle &dmic_bus_clk1_idle
+		&dmic_bus_clk2_nc &dmic_pdm_idle
+		&dmic_pdm1_idle &dmic_pdm2_nc>;
+};
+
+&abox_uaif_3 {
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-1;
+	pinctrl-names = "default", "active", "idle";
+	pinctrl-0 = <&aud_i2s3_default_common &aud_i2s3_default_in>;
+	pinctrl-1 = <&aud_i2s3_active_common &aud_i2s3_active_in>;
+	pinctrl-2 = <&aud_i2s3_idle_common &aud_i2s3_idle_in>;
+};
+

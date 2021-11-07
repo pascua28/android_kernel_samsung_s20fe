@@ -1,0 +1,169 @@
+/*
+ * SAMSUNG UNIVERSAL9830 board device tree source
+ *
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "battery_data_c2_common.dtsi"
+
+/ {
+	fragment@battery {
+		target-path = "/";
+		__overlay__ {
+			battery {
+				battery,full_condition_vcell = <4330>;
+				battery,recharge_condition_vcell = <4310>;
+				battery,chg_float_voltage = <4380>;
+
+				battery,swelling_low_temp_current = <900>;	/* 0.24C */
+				battery,swelling_low_temp_current_2nd = <350>;	/* 0.1C */
+				battery,swelling_low_temp_current_3rd = <2750>;	/* 0.72C */
+				battery,swelling_low_temp_topoff = <194>;	/* 0.05C */
+				battery,swelling_high_temp_current = <1350>;	/* 0.36C */
+				battery,swelling_high_temp_topoff = <194>;	/* 0.05C */
+				battery,swelling_wc_high_temp_current = <900>;	/* 0.24C */
+				battery,swelling_wc_low_temp_current = <900>;	/* 0.24C */
+ 				battery,swelling_wc_low_temp_current_2nd = <350>;	/* 0.1C */
+				battery,swelling_wc_low_temp_current_3rd = <2750>;	/* 0.72C */
+				battery,swelling_low_rechg_thr = <180>;
+
+				battery,swelling_drop_float_voltage = <4150>;
+				battery,swelling_high_rechg_voltage = <4000>;
+
+				battery,chg_high_temp = <470>;
+				battery,chg_high_temp_recovery = <450>;
+
+				battery,dchg_high_temp = <550>;
+				battery,dchg_high_temp_recovery = <420>;
+				battery,dchg_high_batt_temp = <400>;
+				battery,dchg_high_batt_temp_recovery = <390>;
+
+				battery,battery_full_capacity = <4000>;
+
+				/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
+				battery,age_data = <0 4380 4310 4330 93
+						300 4360 4290 4310 92
+						400 4340 4270 4290 91
+						700 4320 4250 4270 90
+						1000 4270 4200 4220 89>;
+
+				battery,cisd_max_voltage_thr = <4430>; /* battery ovp detection voltage */
+
+				battery,dc_step_chg_cond_vol = <4110 4210 4380>; /* STEP_CHARGING_CONDITION_VOLTAGE */ 
+				battery,dc_step_chg_cond_iin = <1800 1610 0>; /* STEP_CHARGING_CONDITION_INPUT_CURRENT */
+				battery,dc_step_chg_val_vfloat = <4110 4210 4380>; /* STEP_CHARGING_CONDITION_FLOAT_VOLTAGE */
+				battery,dc_step_chg_val_iout = <4690 3600 3220>;
+				battery,dc_step_chg_cond_soc = <25 55 100 25 55 100 25 55 100 25 55 100 25 55 100>; /* STEP_CHARGING_CONDITION_SOC */
+
+				battery,snkcap_data = /bits/ 8 <0x04 0x2C 0x91 0x01 0x36 0xC8 0xD0 0x02 0x00 0xC8 0x90
+					0x41 0x8B 0x34 0x21 0xDC 0xC0>;
+			};
+
+			max77705-fuelgauge {
+				fuelgauge,qrtable20 = <0x1500>;
+				fuelgauge,qrtable30 = <0x1000>;
+				fuelgauge,fg_resistor = <5>;
+				fuelgauge,capacity = <0x05AC>;
+				/* fullcapnom(=capacity), dPacc, dQacc,  rcomp0, tempco */
+				fuelgauge,fg_reset_wa_data = <0x05AC 0x3200 0x016A 0x0040 0x293A>;
+			};
+
+			cable-info {
+				full_check_current_1st = <582>;
+				full_check_current_2nd = <194>;
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+};
+
+&pinctrl_0 {
+	pdet_b: pdet-b {
+		samsung,pins = "gpa0-6";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <3>;
+	};
+
+	ping_nen: ping-nen {
+		samsung,pins = "gpa2-1";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <3>;
+	};
+
+	wchg_pdrc: wchg-pdrc {
+		samsung,pins = "gpa4-1";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+};
+
+#define FOD_FLAG_NONE			0
+#define FOD_FLAG_ADD			1
+#define FOD_FLAG_USE_CC			2
+#define FOD_FLAG_USE_DEFAULT	3
+#define SET_FOD_CC(_flag)		(FOD_FLAG_ ##_flag)
+#define SET_FOD_CV(_flag)		(FOD_FLAG_ ##_flag << 4)
+#define SET_FOD_FULL(_flag)		(FOD_FLAG_ ##_flag << 8)
+
+&hsi2c_6 {
+	mfc-charger@3b {
+		fod_list {
+			count = <1>;
+
+			pad_0x00 { /* DEFAULT */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(ADD))>;
+				cc = <150 58 142 48 150 31 150 26 155 7 156 6>;
+				cv = <150 88 142 78 150 61 150 56 155 37 156 36>;
+				full = <255 127 255 127 255 127 255 127 255 127 255 127>;
+			};
+		};
+	};
+
+	mfc-s2miw04-charger@6f {
+		compatible = "lsi,mfc-s2miw04-charger";
+		reg = <0x6f>;
+		status = "okay";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pdet_b &wpc_det &ping_nen &wchg_pdrc &wpc_en &wpc_int>;
+
+		battery,wpc_int = <&gpa3 1 0>;
+		battery,wpc_det = <&gpa2 0 0>;
+		battery,pdet_b = <&gpa2 6 0>;
+		battery,mst_pwr_en = <&gpm18 0 0>;
+		battery,ping_nen = <&gpa2 1 0>;
+		battery,wpc_pdrc = <&gpa4 1 0>;
+		battery,wpc_en = <&gpm10 0 0>;
+
+		battery,charger_name = "max77705-charger";
+		battery,fuelgauge_name = "max77705-fuelgauge";
+		battery,wireless_charger_name = "mfc-charger";
+		battery,wc_cover_rpp = <0x44>;
+		battery,phone_fod_threshold = <0x3b>;
+		battery,oc_fod1 = <1100>;
+		battery,wireless20_vout_list = <9 9 9>; /* WIRELESS_VOUT_11V, 11V, 11V */
+		battery,wireless20_vrect_list = <10 11 11>; /* MFC_AFC_CONF_12V_TX, 12.5V, 12.5V */
+		battery,wireless20_max_power_list = <2 3 3>; /* SEC_WIRELESS_RX_POWER_12W, 15W, 15W */
+
+		fod_list {
+			count = <1>;
+
+			pad_0x00 { /* DEFAULT */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(USE_CC) | SET_FOD_FULL(ADD))>;
+				cc = <0x06 0xAA 0x06 0xAA 0x06 0xAA 0x06 0x99 0x06 0x99 0x06 0x99 0x0C 0x85 0x0C 0x85 0x08 0x9E 0x08 0x9E>;
+				full = <0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF>;
+			};
+		};
+	};
+};

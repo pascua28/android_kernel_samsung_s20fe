@@ -1,0 +1,11 @@
+ccflags-y := -Wformat
+obj-$(CONFIG_BATTERY_SAMSUNG)	+= sec_battery_test.o
+obj-$(CONFIG_BATTERY_SAMSUNG)	+= sec_battery_dt_test.o
+obj-$(CONFIG_WIRELESS_AUTH)	+= sec_battery_misc_test.o
+obj-$(CONFIG_BATTERY_SAMSUNG)	+= sec_battery_sysfs_test.o
+obj-$(CONFIG_BATTERY_CISD)	+= sec_cisd_test.o
+obj-$(CONFIG_STEP_CHARGING)	+= sec_step_charging_test.o
+obj-$(CONFIG_OF)	+= sec_adc_test.o
+obj-$(CONFIG_MULTI_CHARGING)	+= sec_multi_charger_test.o
+obj-$(CONFIG_CCIC_NOTIFIER)	+= sec_pd_test.o
+obj-$(CONFIG_DIRECT_CHARGING)   += sec_direct_charger_test.o

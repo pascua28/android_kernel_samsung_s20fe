@@ -1,0 +1,160 @@
+/*
+ * SAMSUNG EXYNOS9820 board device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/plugin/;
+#include "exynos9830-universal9830_power.dtsi"
+#include "exynos9830-universal9830_common.dtsi"
+//#include "exynos9830-universal9830-camera_r01.dtsi"
+#include "exynos9830-universal9830-cp-s5123-sipc.dtsi"
+
+#define BOARD_ID	0x10
+#define BOARD_REV	0x4
+
+/ {
+	compatible = "samsung,exynos990", "samsung,UNIVERSAL990";
+	board_id = <BOARD_ID>;
+	board_rev = <BOARD_REV>;
+
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			model = "Samsung UNIVERSAL9830 board based on EXYNOS9830";
+
+			acpm_ipc {
+				compatible = "samsung,exynos-acpm-ipc";
+				board-id = <BOARD_ID>;
+				board-rev = <BOARD_REV>;
+			};
+
+			firmware {
+				android: android {
+					compatible = "android,firmware";
+					vbmeta {
+						compatible = "android,vbmeta";
+						parts = "vbmeta,boot,system,vendor";
+					};
+					fstab {
+						compatible = "android,fstab";
+						vendor: vendor {
+							compatible = "android,vendor";
+							dev = "/dev/block/platform/13100000.ufs/by-name/vendor";
+							type = "ext4";
+							mnt_flags = "ro";
+							fsmgr_flags = "wait,avb";
+							status = "disabled";
+						};
+					};
+				};
+			};
+
+			micbias1: fixedregulator@1 {
+				gpio = <&gpp4 1 0>;
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&panel_0 {
+	/* reset, power */
+	gpios = <&gpa3 4 0x1>;
+};
+
+&chosen {
+	bootargs_ext = "console=ram root=/dev/ram0 androidboot.boot_devices=13100000.ufs";
+};
+
+&usi_11 {
+	usi_v2_mode = "i2c";
+	status = "okay";
+};
+
+&usi_16 {
+	usi_v2_mode = "spi";
+	status = "okay";
+};
+
+&hsi2c_26 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	expander_gpios: pcal6524@22 {
+		compatible = "pcal6524,gpio-expander";
+		gpio-controller;
+		#gpio-cells = <2>;
+		reg = <0x22>;
+		pinctrl-names = "expander_reset_setting";
+		pinctrl-0 = <&expander_reset_active>;
+		pcal6524,gpio_start = <300>;
+		pcal6524,ngpio = <24>;
+		pcal6524,reset-gpio = <&gpm21 0 0>;
+		pcal6524,support_initialize = <1>;
+		/* config, 24 ~ 0, 1bit configure[1:input, 0:output]*/
+		pcal6524,config = <0xFFFFFF>;    /* P2[11111111] P1[11111111] P0[11111111] */
+		/* data_out, 24 ~ 0, 1bit configure[1:high, 0:low]*/
+		pcal6524,data_out = <0x000000>;  /* P2[00000000] P1[00000000] P0[00000000] */
+		/* pull_reg, 8 ~ 0, 2bit configure[00:no_pull, 01:pull_down, 10:pull_up, 11:not used] */
+		pcal6524,pull_reg_p0 = <0x0000>; /* 00 00 00 00 / 00 00 00 00 */
+		pcal6524,pull_reg_p1 = <0x0000>; /* 00 00 00 00 / 00 00 00 00 */
+		pcal6524,pull_reg_p2 = <0x0000>; /* 00 00 00 00 / 00 00 00 00 */
+	};
+};
+
+&hsi2c_31 {
+	cs35l40@40 {
+		pinctrl-names;
+		reset-gpios = <&expander_gpios 19 0>;
+	};
+
+	cs35l40@41 {
+		pinctrl-names;
+		reset-gpios = <&expander_gpios 18 0>;
+	};
+};
+
+&pcie_0 {
+	status = "okay";
+	use-sysmmu = "false";
+	use-cache-coherency = "false";
+	use-msi = "false";
+	ep-device-type = <EP_BCM_WIFI>;
+	pcie,wlan-gpio = <&gpb0 4 0x1 /* WLAN_EN */ >;
+};
+
+&pcie_2 {
+	status = "okay";
+	chip-ver = <1>;
+	use-sysmmu = "false";
+	use-cache-coherency = "true";
+	use-msi = "true";
+	use-pcieon-sleep = "true";
+	phy-power-off = "false";
+	ep-device-type = <EP_SAMSUNG_MODEM>;
+};
+
+&ufs {
+	/* board type for UFS CAL */
+	evt-ver = /bits/ 8 <1>;
+};
+
+&displayport {
+	status = "okay";
+	dp,aux_sw_oe = <&expander_gpios 13 0>;
+	dp,sbu_sw_sel = <&expander_gpios 12 0>;
+	dp,usb_con_sel = <&gpm26 0 0>;
+
+	pinctrl-names = "default";
+};
+

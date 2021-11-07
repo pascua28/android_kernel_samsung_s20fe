@@ -1,0 +1,83 @@
+/*
+ * Samsung Exynos SoC series Pablo driver
+ *
+ * Copyright (c) 2019 ~ 2020 Samsung Electronics Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+&usi_1 {
+	usi_v2_mode = "spi";
+	status = "okay";
+};
+
+&pinctrl_4 {
+	range_spi: range-spi {
+		samsung,pins = "gpp0-6", "gpp0-5", "gpp0-4";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <4>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+
+	range_spi_cs: range-spi-cs {
+		samsung,pins = "gpp0-7";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <4>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+
+	range_spi_off: range-spi-off {
+		samsung,pins = "gpp0-7","gpp0-6", "gpp0-5", "gpp0-4";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <0>;
+		samsung,pin-val = <0>;
+	};	
+};
+
+&pinctrl_4 {	/*10430000*/
+	range_int: range-int {
+		samsung,pins = "gpg0-0";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+};
+
+&spi_1 {
+	status = "okay";
+	pinctrl-names = "default", "vddoff";
+	pinctrl-0 = <&range_spi &range_spi_cs>;
+	pinctrl-1 = <&range_spi_off>;
+	spi-cpha;
+	spi-cpol;
+
+	vl53l5_spi@0 {
+		compatible = "vl53l5";
+		spi-max-frequency = <20000000>;
+		reg = <0x0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&range_int>;
+
+		stm,firmware_name = "range_sensor/vl53l5.bin";
+		stm,genshape_name = "range_sensor/generic_xtalk_shape_c2_02.bin";
+		stm,io_vdd = "VDD_LAF_IO_1P8";
+		stm,a_vdd = "VDD_LAF_A3P3";
+		stm,fac_rotation_mode = <3>;
+		stm,spi_node = <&spi_1>;
+		spi-cpha;
+		spi-cpol;
+
+		controller-data {
+			samsung,spi-chip-select-mode = <0>;
+			samsung,spi-feedback-delay = <0>;
+		};
+	};
+};

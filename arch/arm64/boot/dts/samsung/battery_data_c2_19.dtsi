@@ -1,0 +1,47 @@
+/*
+ * SAMSUNG UNIVERSAL9830 board device tree source
+ *
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "battery_data_c2_common.dtsi"
+
+#define FOD_FLAG_NONE			0
+#define FOD_FLAG_ADD			1
+#define FOD_FLAG_USE_CC			2
+#define FOD_FLAG_USE_DEFAULT	3
+#define SET_FOD_CC(_flag)		(FOD_FLAG_ ##_flag)
+#define SET_FOD_CV(_flag)		(FOD_FLAG_ ##_flag << 4)
+#define SET_FOD_FULL(_flag)		(FOD_FLAG_ ##_flag << 8)
+
+&hsi2c_6 {
+	mfc-charger@3b {
+		fod_list {
+			count = <1>;
+
+			pad_0x00 { /* DEFAULT */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(ADD))>;
+				cc = <150 62 142 53 150 35 150 30 155 7 156 4>;
+				cv = <150 92 142 83 150 65 150 60 155 37 156 34>;
+				full = <255 127 255 127 255 127 255 127 255 127 255 127>;
+			};
+
+            pad_0x20 { /* CROWN PAD(portrait) */
+                flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(USE_DEFAULT))>;
+                cc = <150 102 142 93 150 75 150 70 155 47 156 44>;
+                cv = <150 127 142 123 150 105 150 100 155 77 156 74>;
+ 			};
+
+            pad_0x32 { /* N5100 (portrait) */
+                flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(USE_DEFAULT))>;
+                cc = <150 102 142 93 150 75 150 70 155 47 156 44>;
+                cv = <150 127 142 123 150 105 150 100 155 77 156 74>;
+			};
+		};
+	};
+};

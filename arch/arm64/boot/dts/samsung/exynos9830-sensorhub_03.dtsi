@@ -1,0 +1,131 @@
+/*
+ * SAMSUNG EXYNOS9820 board device tree source
+ *
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/***** SensorHub *****/
+
+/* PERIC0 USI14_SPI */
+&spi14_bus {
+	samsung,pins = "gpp3-6", "gpp3-5", "gpp3-4";
+	samsung,pin-function = <2>;
+	samsung,pin-pud = <0>;
+	samsung,pin-drv = <0>;
+	samsung,pin-con-pdn = <3>;
+	samsung,pin-pud-pdn = <0>;
+};
+
+&spi14_cs_func {
+	samsung,pins = "gpp3-7";
+	samsung,pin-function = <2>;
+	samsung,pin-pud = <0>;
+	samsung,pin-drv = <0>;
+	samsung,pin-con-pdn = <3>;
+	samsung,pin-pud-pdn = <0>;
+};
+
+&pinctrl_0 {
+		ssp_batch_wake_irq: ssp-batch-wake-irq {
+			samsung,pins = "gpa0-5";
+			samsung,pin-function = <1>;
+			samsung,pin-pud = <0>;
+			samsung,pin-con-pdn = <1>;
+			samsung,pin-pud-pdn = <0>;
+		};
+		ssp_host_req: ssp-host-req {
+			samsung,pins = "gpa1-7";
+			samsung,pin-function = <0xf>;
+			samsung,pin-pud = <1>;
+			samsung,pin-drv = <3>;
+		};
+		ssp_shub_int: ssp-shub-int {
+			samsung,pins = "gpa4-0";
+			samsung,pin-function = <0xf>;
+			samsung,pin-pud = <0>;
+			samsung,pin-drv = <3>;
+		};
+};
+
+&pinctrl_1 {
+	ssp_mcu_resp: ssp-mcu-resp {
+		samsung,pins = "gpm19-0";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <3>;
+		samsung,pin-con-pdn = <2>;
+		samsung,pin-pud-pdn = <0>;
+	};
+};
+
+&pinctrl_5 {
+	ssp_gps_pwr_en: ssp-gps-pwr-en {
+		samsung,pins = "gpp6-3";
+		samsung,pin-function = <1>;
+		samsung,pin-pud = <1>;
+		samsung,pin-drv = <3>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+	ssp_mcu_req: ssp-mcu-req {
+		samsung,pins = "gpb0-5";
+		samsung,pin-function = <1>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <3>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+};
+
+&spi_14 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi14_bus &spi14_cs_func>;
+
+	status = "okay";
+	
+	BCM4773@0 {
+		compatible = "ssp,BCM4773";
+		reg = <0x0>;
+		spi-max-frequency = <25000000>;
+		spi-cpol;
+		spi-cpha;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ssp_host_req &ssp_mcu_req &ssp_mcu_resp &ssp_batch_wake_irq &ssp_shub_int &ssp_gps_pwr_en>;
+
+		ssp-acc-position = <5>;
+		ssp-mag-position = <6>;
+		ssp-mag-array = /bits/ 8 <0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+					0 0 0 0 0 0 0>;
+		ssp-thermi-up = /bits/ 16 <3248 2964 2926 2883 2822 2750 2670 2564 2450 2320 2178 2020 1860 1700
+					1540 1377 1218 1079 999 834 753 647 566>;
+		ssp-thermi-sub = /bits/ 16 <4095 2953 2918 2873 2810 2741 2656 2552 2441 2312 2171 2015 1857 1698
+					1537 1377 1217 1083 1003 845 758 654 575>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+		ssp-gps-pwr-en = <&gpp6 3 0x0>;
+		ssp-host-req = <&gpa1 7 0x00>;
+		ssp-mcu-req = <&gpb0 5 0x00>;
+		ssp-mcu-resp = <&gpm19 0 0x00>;
+		ssp-batch-wake-irq = <&gpa0 5 0x00>;
+		ssp-shub-int = <&gpa4 0 0x00>;
+		ssp-ap-rev = <1>;
+		ssp-sns-combination = <0>;
+		ssp-glass-type = <0>;
+		ssp-mag-type = <1>;
+		ssp-vdd-mcu-1p8 = "vdd_mcu_1p8";
+		
+		controller-data {
+			cs-gpio = <&gpp3 7 0>;
+			samsung,spi-feedback-delay = <0>;
+		};
+	};
+};

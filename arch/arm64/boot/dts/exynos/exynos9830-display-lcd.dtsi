@@ -1,0 +1,776 @@
+/*
+ * SAMSUNG LCD Panel Device Tree Source
+ *
+ * Copyright (c) 2017 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+#include "exynos9830-mipi-dsi-freq.dtsi"
+
+/ {
+	fragment@lcd {
+		target-path = "/";
+		__overlay__ {
+			emul_display: emul_display {
+				mode = <0>; /* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <320 240>;
+		/*		resolution = <1080 1920>; */
+				size = <80 120>;
+				timing,refresh = <60>;
+				timing,h-porch = <20 20 20>;
+				timing,v-porch = <20 20 20>;
+				timing,dsi-hs-clk = <600>;
+				/* TODO : pmsk value to be set */
+				timing,pmsk = <1 96 2 0>;
+				timing,dsi-escape-clk = <20>;
+				underrun_lp_ref = <307>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <0>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <0>;			/* used DSC count */
+				dsc_slice_num = <0>;		/* count of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_lp_ref = <1203>;	/* for underrun detect at command mode*/
+				vt_compensation = <10731>;	/* wclk = 100MHZ, 320 x 240 for underrun detect at video mode*/
+				hdr_num = <0>;			/* max: 4 */
+				hdr_type = <0 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <0>;		/* 0 */
+				hdr_max_avg_luma = <0>;		/* 0 */
+				hdr_min_luma = <0>;		/* 0.0000 */
+			};
+
+			s6e3hf4: s6e3hf4_wqhd {
+				mode = <2>;			/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1440 2560>; 	/* <720 1280> - dsc disable, <1440 2560> - dsc enable */
+				size = <68 122>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 3 1>;
+				timing,dsi-hs-clk = <1100>;	/* <600> - <3 277 3 0>, <898> - <2 138 2 0> */
+				timing,pmsk = <3 254 2 0>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <4>;		/* count of dsc slice */
+				dsc_slice_h = <64>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_lp_ref = <5629>;	/* for underrun detect (max : 65535) */
+				mres_en = <0>;
+				mres_number = <1>;
+				mres_width = <1440 0 0>;
+				mres_height = <2560 0 0>;
+				mres_dsc_width = <360 0 0>;
+				mres_dsc_height = <64 0 0>;
+				mres_dsc_en = <1 0 0>;
+				hdr_num = <1>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3ha2k: s6e3ha2k_wqhd {
+				mode = <2>;			/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1440 2560>;
+				size = <80 120>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <19 3 1>;
+				timing,dsi-hs-clk = <1100>;
+				timing,pmsk = <3 127 0 0>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <1>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <0>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <0>;			/* used DSC count */
+				dsc_slice_num = <0>;		/* count of dsc slice */
+				dsc_slice_h = <0>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_lp_ref = <1203>;	/* for underrun detect*/
+				mres_en = <0>;
+				mres_number = <1>;
+				mres_width = <1440 0 0>;
+				mres_height = <2560 0 0>;
+				mres_dsc_width = <0 0 0>;
+				mres_dsc_height = <0 0 0>;
+				mres_dsc_en = <0 0 0>;
+				hdr_num = <1>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3ha3: s6e3ha3_wqhd {
+				mode = <2>;			/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1440 2560>;
+				size = <70 121>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <19 3 1>;
+				timing,dsi-hs-clk = <1100>;
+				timing,pmsk = <3 127 0 0>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <1>;			/* used DSC count */
+				dsc_slice_num = <1>;		/* count of dsc slice */
+				dsc_slice_h = <32>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_lp_ref = <1203>;	/* for underrun detect*/
+				mres_en = <0>;
+				mres_number = <1>;
+				mres_width = <1440 0 0>;
+				mres_height = <2560 0 0>;
+				mres_dsc_width = <1440 0 0>;
+				mres_dsc_height = <32 0 0>;
+				mres_dsc_en = <1 0 0>;
+				hdr_num = <1>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3ha6: s6e3ha6_ddi {
+				mode = <2>;
+				resolution = <1440 2960>;
+				size = <69 142>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 3 1>;
+				timing,dsi-hs-clk = <898>;
+				timing,pmsk = <
+					0x2 0x114 0x2 0x4ec5 /* p m s k */
+					0xd 0x6 0x0 0x0    /* mfr mrr sel_pf icp */
+					0x0 0x0 0x0 0x0    /* afc_enb extafc feed_en fsel */
+					0x0 0x0              /* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_lp_ref = <3744 5359 4367>;	/* for underrun detect*/
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <2960 2220 1480>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <40 30 74>;
+				mres_dsc_en = <1 1 0>;
+				hdr_num = <1>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+
+			s6e3ha8: s6e3ha8_ddi {
+				id = <0x460091 0x430491>;
+				mode = <2>;
+				resolution = <1440 2960>;
+				size = <69 142>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <898>;	/* <600> - <3 277 3 0>, <898> - <2 138 2 0> */
+				timing,pmsk = <
+					0x2 0x8A  0x2 0x0	/* p m s k */
+					0x0 0x0	  0x0 0x0	/* mfr mrr sel_pf icp */
+					0x0 0x0   0x0 0x0	/* afc_enb extafc feed_en fsel */
+					0x0 0x0          	/* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <2960 2220 1480>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <40 30 74>;
+				mres_dsc_en = <1 1 1>;
+				default_mode = <0>;
+				/* <xres : yres : fps : lp_ref : dsc_en : slice_w : slice_h> */
+				display_mode = <1440 2960 60 3022 1 720 40>,
+					       <1080 2220 60 5359 1 540 30>,
+					       <720 1480 60 7031 1 360 74>;
+				hdr_num = <1>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3ha9: s6e3ha9_ddi {
+				id = <0x001090 0x1310a1 0x1330a1 0x1300a1>;
+				mode = <2>;
+				resolution = <1440 3040>;
+				size = <69 142>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <898>;	/* <600> - <3 277 3 0>, <898> - <2 138 2 0> */
+				timing,pmsk = <
+					0x2 0x8A  0x2 0x2762 /* p m s k */
+					0xd 0x3	  0x0 0x0    /* mfr mrr sel_pf icp */
+					0x0 0x0   0x0 0x0    /* afc_enb extafc feed_en fsel */
+					0x0 0x0              /* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <3040 2280 1520>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <40 40 76>;
+				mres_dsc_en = <1 1 1>;
+				default_mode = <0>;
+				/* <xres : yres : fps : lp_ref : dsc_en : slice_w : slice_h> */
+				display_mode = <1440 3040 60 2877 1 720 40>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_898 &freq_903_5 &freq_910 &freq_929_5>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3hab: s6e3hab_ddi {
+				id = <0x001081>;
+				mode = <2>;
+				resolution = <1440 3200>;
+				size = <69 154>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <1157>;
+				timing,pmsk = <
+					0x02 0xB2 0x02 0x00
+					0x0D 0x04 0x00 0x00
+					0x00 0x00 0x00 0x00
+					0x00 0x00>;        /* fout_mask rsel */
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <5003 7530 9337>;	/* for underrun detect*/
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <3200 2400 1600>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <40 40 80>;
+				mres_dsc_en = <1 1 1>;
+				default_mode = <0>;
+				display_mode = <1440 3200 60 7790 1 720 40>,
+							 <1440 3200 48 7790 1 720 40>,
+							 <1080 2400 60 10317 1 540 40>,
+							 <1080 2400 48 10317 1 540 40>,
+							 <1080 2400 120 10317 1 540 40>,
+							 <1080 2400 96 10317 1 540 40>,
+							 <720 1600 60 11404 1 360 80>,
+							 <720 1600 48 11404 1 360 80>,
+							 <720 1600 120 11404 1 360 80>,
+							 <720 1600 96 11404 1 360 80>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_1143 &freq_1150 &freq_1157 &freq_1176>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3hac: s6e3hac_ddi {
+				id = <0x001081>;
+				mode = <2>;
+				resolution = <1440 3088>;
+				size = <69 154>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <1170>;
+				timing,pmsk = <
+					0x02 0xB4 0x02 0x00
+					0x0D 0x04 0x00 0x00
+					0x00 0x00 0x00 0x00
+					0x00 0x00>;        /* fout_mask rsel */
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <193>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <5324 7766 9509>;	/* for underrun detect*/
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <3088 2316 1544>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <193 193 193>;
+				mres_dsc_en = <1 1 1>;
+				default_mode = <0>;
+				display_mode =
+					<1440 3088 60 5324 1 720 193>,
+					<1440 3088 48 5324 1 720 193>,
+					<1080 2316 120 7766 1 540 193>,
+					<1080 2316 96 7766 1 540 193>,
+					<1080 2316 60 7766 1 540 193>,
+					<1080 2316 48 7766 1 540 193>,
+					<720 1544 120 9509 1 360 193>,
+					<720 1544 96 9509 1 360 193>,
+					<720 1544 60 9509 1 360 193>,
+					<720 1544 48 9509 1 360 193>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_1194 &freq_1150 &freq_1157 &freq_1170>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3hab_fhd: s6e3hab_fhd_ddi {
+				id = <0x001081>;
+				mode = <2>;
+				resolution = <1080 2400>;
+				size = <69 154>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <1170>;
+				timing,pmsk = <
+					0x02 0xB4 0x02 0x00
+					0x0D 0x04 0x00 0x00
+					0x00 0x00 0x00 0x00
+					0x00 0x00>;        /* fout_mask rsel */
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <7766>;	/* for underrun detect*/
+				mres_en = <0>;
+				mres_number = <1>;
+				mres_width = <1080>;
+				mres_height = <2400>;
+				mres_dsc_width = <540>;
+				mres_dsc_height = <40>;
+				mres_dsc_en = <1>;
+				default_mode = <0>;
+				display_mode = <1080 2400 60 10317 1 540 40>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_1194 &freq_1150 &freq_1157 &freq_1160>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3fa9: s6e3fa9_ddi {
+				id = <0x001086>;
+				mode = <2>;
+				resolution = <1080 2400>;
+				size = <70 155>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <1170>;
+				timing,pmsk = <
+					0x02 0xB4 0x02 0x00
+					0x0D 0x04 0x00 0x00
+					0x00 0x00 0x00 0x00
+					0x00 0x00>;        /* fout_mask rsel */
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <117>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <7766>;	/* for underrun detect*/
+				mres_en = <0>;
+				default_mode = <0>;
+
+				display_mode = <1080 2400 60 7530 0 540 40>;	/* w, h, fps, lpref, dsc_en, slice_w, slice,h */
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_1194 &freq_1150 &freq_1157 &freq_1170>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3fab: s6e3fab_ddi {
+				id = <0x001082>;
+				mode = <2>;
+				resolution = <1080 2340>;
+				size = <69 154>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <1170>;
+				timing,pmsk = <
+					0x02 0xB4 0x02 0x00
+					0x0D 0x04 0x00 0x00
+					0x00 0x00 0x00 0x00
+					0x00 0x00>;        /* fout_mask rsel */
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <117>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <7766>;	/* for underrun detect*/
+				mres_en = <0>;
+				default_mode = <0>;
+
+				display_mode = <1080 2340 60 7530 1 540 117>;	/* w, h, fps, lpref, dsc_en, slice_w, slice,h */
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				dynamic_freq =  <&freq_1194 &freq_1150 &freq_1157 &freq_1170>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3xa0: s6e3xa0_ddi {
+				id = <0x001081>;
+				mode = <2>;
+				resolution = <2160 1536>;
+				size = <151 108>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <898>;	/* <600> - <3 277 3 0>, <898> - <2 138 2 0> */
+				timing,pmsk = <
+					0x2 0x8A  0x2 0x2762 /* p m s k */
+					0xd 0x3	  0x0 0x0    /* mfr mrr sel_pf icp */
+					0x0 0x0   0x0 0x0    /* afc_enb extafc feed_en fsel */
+					0x0 0x0              /* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <32>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <2877 5278 6994>;	/* for underrun detect*/
+				mres_en = <1>;
+				mres_number = <3>;
+				mres_width = <2160 2160 2160>;
+				mres_height = <1536 1536 1536>;
+				mres_dsc_width = <1080 1080 1080>;
+				mres_dsc_height = <32 32 32>;
+				mres_dsc_en = <1 1 1>;
+				display_mode = <2160 1536 60>;
+				hdr_num = <0>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3fa7: s6e3fa7_ddi {
+				id = <0xdddddd>;
+				mode = <2>;
+				resolution = <720 1680>;
+				size = <46 107>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 8 1>;
+				timing,dsi-hs-clk = <898>;	/* <600> - <3 277 3 0>, <898> - <2 138 2 0> */
+				timing,pmsk = <
+					0x2 0x8A  0x2 0x0    /* p m s k */
+					0xd 0x3	  0x0 0x0    /* mfr mrr sel_pf icp */
+					0x0 0x0   0x0 0x0    /* afc_enb extafc feed_en fsel */
+					0x0 0x0              /* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <32>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <3816 5278 6994>;	/* for underrun detect*/
+				mres_en = <0>;
+				mres_number = <3>;
+				mres_width = <2160 2160 2160>;
+				mres_height = <1536 1536 1536>;
+				mres_dsc_width = <1080 1080 1080>;
+				mres_dsc_height = <32 32 32>;
+				mres_dsc_en = <1 1 1>;
+				display_mode = <720 1680 60>;
+				hdr_num = <0>;			/* max: 4 */
+				hdr_type = <2 0 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;	/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+			};
+
+			s6e3fa0: s6e3fa0_fhd {
+				id = <0x244040>;
+				mode = <2>;             /* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1080 1920>;
+				size = <70 121>;
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <10 3 1>;
+				timing,dsi-hs-clk = <1100>;
+				timing,pmsk = <3 254 2 0>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;           /* 0: Disable, 1: Enable */
+				mic_ratio = <2>;        /* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <0>;          /* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;      /* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;           /* 0: Disable, 1: Enable */
+				dsc_cnt = <0>;          /* used DSC count */
+				dsc_slice_num = <0>;    /* count of dsc slice */
+				dsc_slice_h = <40>;	/* height of dsc slice */
+				data_lane = <4>;	/* number of using data lane */
+				mres_en = <0>;
+				mres_number = <1>;
+				mres_width = <1080 0 0>;
+				mres_height = <1920 0 0>;
+				mres_dsc_width = <0 0 0>;
+				mres_dsc_height = <0 0 0>;
+				mres_dsc_en = <0 0 0>;
+				default_mode = <0>;
+				/* <xres : yres : fps : lp_ref : dsc_en : slice_w : slice_h> */
+				display_mode = <1080 1920 60 2467 0 0 0>;
+				hdr_num = <1>;		/* max: 4 */
+				hdr_type = <2 0 0 0>;	/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;		/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;				/* 0.0005 */
+			};
+
+			s6e3fa0_vid: s6e3fa0_fhd_vid {
+				id = <0x244040>;
+				mode = <0>; /* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1080 1920>;
+				size = <80 120>;
+				timing,refresh = <60>;
+				timing,h-porch = <20 20 20>;
+				timing,v-porch = <2 20 2>;
+				timing,dsi-hs-clk = <1100>;
+				/* TODO : pms value to be set */
+				timing,pmsk = <4 677 2 0>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;		/* 0: Disable, 1: Enable */
+				mic_ratio = <0>;	/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <0>;		/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;	/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;		/* 0: Disable, 1: Enable */
+				dsc_cnt = <0>;		/* used DSC count */
+				dsc_slice_num = <0>;	/* count of dsc slice */
+				data_lane = <4>;	/* number of using data lane */
+				cmd_underrun_cnt = <4942>;	/* for underrun detect at command mode*/
+				vt_compensation = <39>;	/* for underrun detect at video mode*/
+				mres_en = <0>;
+				mres_number = <3>;
+				mres_width = <1440 1080 720>;
+				mres_height = <2960 2220 1480>;
+				mres_dsc_width = <720 540 360>;
+				mres_dsc_height = <40 30 74>;
+				mres_dsc_en = <1 1 0>;
+				hdr_num = <1>;		/* max: 4 */
+				hdr_type = <2 0 0 0>;	/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <5400000>;		/* 540 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;				/* 0.0005 */
+			};
+
+			ea8076: ea8076_ddi {
+				id = <0x800083>;
+				mode = <2>;	/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1080 2400>;
+				size = <67 150>;	/* 67.284 * 149.52 */
+				timing,refresh = <60>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 3 1>;
+				timing,dsi-hs-clk = <1176>;	/* <1176> - <2 181 2 0> */
+				timing,pmsk = <
+					0x2 0xB5  0x2 0x0	/* p m s k */
+					0x0 0x0	  0x0 0x0	/* mfr mrr sel_pf icp */
+					0x0 0x0   0x0 0x0	/* afc_enb extafc feed_en fsel */
+					0x0 0x0          	/* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <0>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <0>;			/* used DSC count */
+				dsc_slice_num = <0>;		/* count of dsc slice */
+				dsc_slice_h = <0>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <1653>;	/* for underrun detect*/
+				mres_en = <0>;
+				default_mode = <0>;
+				display_mode = <1080 2400 60 1653 0 0 0>;	/* w, h, fps, lpref, dsc_en, slice_w, slice,h */
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				/*	A: 1176.5  B: 1195.5  C: 1150.5  D: 1157	*/
+				/* dynamic_freq =  <&freq_1176 &freq_1195 &freq_1150 &freq_1157>; */
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			ea8079: ea8079_ddi {
+				id = <0x800040>;
+				mode = <2>;	/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1080 2400>;
+				size = <67 150>;	/* 67.284 * 149.52 */
+				timing,refresh = <120>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 3 1>;
+				timing,dsi-hs-clk = <1110>;	/* <1110> - <2 171 2 -15124> */
+				timing,pmsk = <
+					0x02 0xAB 0x02 0xC4EC	/* p m s k */
+					0x0 0x0 0x0 0x0	/* mfr mrr sel_pf icp */
+					0x0 0x0 0x0 0x0	/* afc_enb extafc feed_en fsel */
+					0x0 0x0          	/* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <7494>;	/* for underrun detect*/
+				default_mode = <0>;
+				display_mode =
+					<1080 2400 120 1770 1 540 40>,	/* w, h, fps, lpref, dsc_en, slice_w, slice,h */
+					<1080 2400 60 7494 1 540 40>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				/*	A: 1110  B: 1114  C: 1124	*/
+				dynamic_freq =  <&freq_1110 &freq_1114 &freq_1124>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+
+			s6e3fc3: s6e3fc3_ddi {
+				id = <0x805080>;
+				mode = <2>;	/* 0: video mode, 1: DP command mode, 2: MIPI command mode */
+				resolution = <1080 2400>;
+				size = <67 150>;	/* 67.284 * 149.52 */
+				timing,refresh = <120>;
+				timing,h-porch = <2 2 2>;
+				timing,v-porch = <15 3 1>;
+				timing,dsi-hs-clk = <1110>;	/* <1110> - <2 171 2 -15124> */
+				timing,pmsk = <
+					0x02 0xAB 0x02 0xC4EC	/* p m s k */
+					0x0 0x0 0x0 0x0	/* mfr mrr sel_pf icp */
+					0x0 0x0 0x0 0x0	/* afc_enb extafc feed_en fsel */
+					0x0 0x0          	/* fout_mask rsel */
+					>;
+				timing,dsi-escape-clk = <20>;
+				mic_en = <0>;			/* 0: Disable, 1: Enable */
+				mic_ratio = <2>;		/* 0: 1/2 mic, 1: 1/3 mic */
+				mic_ver = <2>;			/* 0: mic v1.1, 1: v1.2, 2: v2.0 */
+				type_of_ddi = <0>;		/* 0: Samsung Mobile, 1: MAGNA, 2: Normal(Etc) */
+				dsc_en = <1>;			/* 0: Disable, 1: Enable */
+				dsc_cnt = <2>;			/* used DSC count */
+				dsc_slice_num = <2>;		/* count of dsc slice */
+				dsc_slice_h = <40>;		/* height of dsc slice */
+				data_lane = <4>;		/* number of using data lane */
+				cmd_underrun_cnt = <7494>;	/* for underrun detect*/
+				default_mode = <0>;
+				display_mode =
+					<1080 2400 120 1770 1 540 40>,	/* w, h, fps, lpref, dsc_en, slice_w, slice,h */
+					<1080 2400 60 7494 1 540 40>;
+				hdr_num = <2>;			/* max: 4 */
+				hdr_type = <2 3 0 0>;		/* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_max_luma = <4000000>;	/* 400 */
+				hdr_max_avg_luma = <1200000>;	/* 120 */
+				hdr_min_luma = <5>;		/* 0.0005 */
+				/*	A: 1110  B: 1114  C: 1124	*/
+				dynamic_freq =  <&freq_1110 &freq_1114 &freq_1124>;
+				color_mode = <0 7 9>;  /* color mode : NATIVE, SRGB, P3 */
+			};
+		};
+	};
+};

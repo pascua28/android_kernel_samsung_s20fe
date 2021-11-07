@@ -1,0 +1,201 @@
+/*
+ * SAMSUNG EXYNOS9830 input device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			gpio_keys {
+				status = "okay";
+				compatible = "gpio-keys";
+				pinctrl-names = "default";
+				pinctrl-0 = <&key_voldown &key_volup &key_power>;
+
+				button@2 {
+					label = "gpio-keys: KEY_VOLUMEDOWN";
+					linux,code = <114>;
+					gpios = <&gpa0 4 0xf>;
+				};
+				button@3 {
+					label = "gpio-keys: KEY_VOLUMEUP";
+					linux,code = <115>;
+					gpios = <&gpa0 3 0xf>;
+				};
+				button@4 {
+					label = "gpio-keys: KEY_POWER";
+					linux,code = <116>;
+					gpios = <&gpa2 4 0xf>;
+					gpio-key,wakeup = <1>;
+				};
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&pinctrl_0 {
+	key_voldown: key-voldown {
+		samsung,pins = "gpa0-4";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	key_volup: key-volup {
+		samsung,pins = "gpa0-3";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	key_power: key-power {
+		samsung,pins = "gpa2-4";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	attn_irq: attn-irq {
+		samsung,pins = "gpa1-0";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	attn_input: attn-input {
+		samsung,pins = "gpa1-0";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+	};
+
+	epen_int_active: epen-int-active {
+		samsung,pins = "gpa2-2";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	epen_pdct_active: epen-pdct-active {
+		samsung,pins = "gpa3-2";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+};
+
+&pinctrl_5 {
+	tspi2c_bus: tspi2c-bus {
+		samsung,pins = "gpp5-6", "gpp5-7";
+		samsung,pin-function = <3>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+};
+
+&hsi2c_15 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&tspi2c_bus>;
+	status = "okay";
+	samsung,reset-before-trans;
+	samsung,stop-after-trans;	/* LSI IC ONLY */
+
+	tsp_lsi: touchscreen@48 {
+		compatible = "sec,sec_ts";
+		reg = <0x48>;
+		pinctrl-names = "on_state", "off_state";
+		pinctrl-0 = <&attn_irq>;
+		pinctrl-1 = <&attn_input>;
+		sec,irq_gpio = <&gpa1 0 0>;
+		sec,irq_type = <8200>;
+		sec,max_coords = <4096 4096>;
+		sec,area-size = <133 266 341>; /* indicator: 24dp navigator:48dp edge:60px dpi=320 */
+		sec,regulator_dvdd = "tsp_io";
+		sec,regulator_avdd = "tsp_avdd";
+		sec,regulator_boot_on;
+		sec,bringup = <0>;
+		support_dex_mode;
+		enable_settings_aot;
+		support_ear_detect_mode;
+		sync-reportrate-120 = "Y";
+		support_fod;
+		support_open_short_test;
+		support_mis_calibration_test;
+	};
+};
+
+&pinctrl_1 {
+	wacomi2c_bus: wacomi2c-bus {
+		samsung,pins = "gpm12-0", "gpm13-0";
+		samsung,pin-function = <2>;	/* only for usi_03_cmgp */
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+};
+
+&speedy {
+	s2mps19mfd@00 {
+		regulators {
+			ldo27_reg: LDO27M {
+				regulator-name = "wacom_avdd";
+				regulator-min-microvolt = <3200000>;
+				regulator-max-microvolt = <3200000>;
+				regulator-initial-mode = <3>;
+				regulator-boot-on;
+			};
+		};
+	};
+};
+
+&hsi2c_44 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&wacomi2c_bus>;
+	samsung,reset-before-trans;
+
+	wacom: wacom@56 {
+		status = "okay";
+		compatible = "wacom,w90xx";
+		reg = <0x56>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&epen_int_active &epen_pdct_active>;
+		wacom,regulator_avdd = "wacom_avdd";
+		wacom,regulator_boot_on;
+		/* gpios */
+		wacom,irq-gpio = <&gpa2 2 0>;
+		wacom,pdct-gpio = <&gpa3 2 0>;
+		wacom,fwe-gpio = <&gpm8 0 0>;
+		/* features */
+		wacom,boot_addr = <0x09>;
+		wacom,origin = <0 0>; /* x y */
+		//wacom,max_coords = <15504 7344>; /* x y */
+		wacom,max_pressure = <4095>;
+		wacom,max_tilt = <63 63>; /* x y */
+		wacom,max_height = <255>;
+		wacom,invert = <1 0 1>; /* x y switch */
+		wacom,ic_type = <9020>;
+		//wacom,fw_path = "epen/w9020_c2_bringup.bin";
+		//wacom,fw_fac_path = "epen/w9020_c2_unit.fw";
+		wacom,module_ver = <0x2>; /* this value use to distinguish open/short test (0x1 : only open test, 0x2: open/short test) */
+		wacom,support_aop_mode = "1"; /* S-note want to check to use aop */
+		wacom,use_garage;
+		wacom,support_garage_open_test = <1>;
+		wacom,spen_garage_pos = "1";
+	};
+};
+

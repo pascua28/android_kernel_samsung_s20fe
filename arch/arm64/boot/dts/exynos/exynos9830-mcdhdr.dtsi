@@ -1,0 +1,60 @@
+/*
+ * SAMSUNG EXYNOS9830 SoC device tree source
+ *
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * SAMSUNG EXYNOS9830 SoC device nodes are listed in this file.
+ * EXYNOS based board files can include this file and provide
+ * values for board specfic bindings.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/ {
+
+	mcdhdr_0: mcdhdr@0x19048000 { /* GF0-L0 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x19048000 0x800>;
+		attr = <0x01>; /* WCG */
+	};
+
+	mcdhdr_1: mcdhdr@0x19048800 { /* GF1-L1 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x19048800 0x800>;
+		attr = <0x01>; /* WCG */
+	};
+
+	mcdhdr_2: mcdhdr@0x19049000 { /* VG-L2 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x19049000 0x800>;
+		attr = <0x03>; /* WCG, HDR10*/
+	};
+
+	mcdhdr_3: mcdhdr@0x19049800 { /* VGS-L3 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x19049800 0x800>;
+		attr = <0x03>; /* WCG, HDR10*/
+	};
+
+	mcdhdr_4: mcdhdr@0x1904A000 { /* VGF-L4 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x1904A000 0x800>;
+		attr = <0x03>; /* WCG, HDR10 */
+	};
+
+	mcdhdr_5: mcdhdr@0x1904A800 { /* VGRFS-L5 */
+		compatible = "samsung,exynos9-mcdhdr";
+		status = "disabled";
+		reg = <0x0 0x1904A800 0x800>;
+		attr = <0x07>; /*WGC, HDR10, HDR10+*/
+	};
+
+};

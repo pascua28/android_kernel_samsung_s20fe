@@ -1,0 +1,152 @@
+/*
+ * SAMSUNG EXYNOS9830 PCIe device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * SAMSUNG EXYNOS9830 SoC device nodes are listed in this file.
+ * EXYNOS9820 based board files can include this file and provide
+ * values for board specfic bindings.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include <dt-bindings/pci/pci.h>
+/ {
+	/* HSI1 GEN2 */
+	pcie_0: pcie@133B0000 {
+		compatible = "samsung,exynos-pcie";
+		gpios = <&gpf0 1 0x1 /* PERST */>;
+		reg = <0x0 0x133B0000 0x1000    /* elbi base */
+			0x0 0x133E0000 0x1000   /* phy base */
+			0x0 0x13021044 0x10     /* sysreg base */
+			0x0 0x133F0000 0x1000   /* DBI base */
+			0x0 0x133D0000 0x1FC    /* phy pcs base */
+			0x0 0x11FFE000 0x2000   /* configuration space */
+			0x0 0x13390000 0x1000>; /* I/A space */
+		reg-names = "elbi", "phy", "sysreg", "dbi", "pcs", "config", "ia";
+		interrupts = <GIC_SPI INTREQ__PCIE_GEN2 IRQ_TYPE_LEVEL_HIGH>;
+		#interrupt-cells = <1>;
+		interrupt-map-mask = <0 0 0 0>;
+		interrupt-map = <0 0 0 0 &gic 0 INTREQ__PCIE_GEN2 0x4>;
+		samsung,syscon-phandle = <&pmu_system_controller>;
+		clocks = <&clock GATE_PCIE_GEN2_MSTR>, <&clock GATE_PCIE_GEN2_PCS>,
+		       <&clock GATE_PCIE_GEN2_PHY>, <&clock GATE_PCIE_GEN2_DBI>,
+		       <&clock GATE_PCIE_GEN2_APB>, <&clock GATE_PCIE_GEN2_REF>;
+		clock-names = "bus", "pcie";
+		pinctrl-names = "active";
+		pinctrl-0 = <&pcie0_clkreq &pcie0_perst>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		device_type = "pci";
+		/* non-prefetchable memory */
+		ranges = <0x82000000 0 0x11000000 0 0x11000000 0 0xFF0000>;
+		/* ranges = <0x82000000 0 0x20000000 0 0x20000000 0 0x20000000>; */
+		ip-ver = <0x983000>;
+		num-lanes = <1>;
+		ch-num = <0>;
+		pcie-clk-num = <0>;
+		phy-clk-num = <0>;
+		pcie-pm-qos-int = <200000>;
+		use-cache-coherency = "false";
+		use-msi = "false";
+		use-sicd = "true";
+		use-sysmmu = "false";
+		use-ia = "true";
+		pmu-offset = <0x718>;
+		use-nclkoff-en = "false";
+		max-link-speed = <LINK_SPEED_GEN1>;
+		status = "disabled";
+	};
+
+	/* HSI1 GEN4_0 */
+	pcie_1:	pcie@13320000 {
+		compatible = "samsung,exynos-pcie-rc";
+		gpios = <&gpf0 3 0x1 /* PERST */>;
+		reg = <0x0 0x13320000 0x2000    /* elbi base */
+			0x0 0x13350000 0x2000   /* phy base */
+			0x0 0x13021060 0x20     /* sysreg base */
+			0x0 0x13400000 0x301000   /* DBI base */
+			0x0 0x13340000 0x1000    /* phy pcs base */
+			0x0 0x12FFE000 0x2000   /* configuration space */
+			0x0 0x13300000 0x1000>; /* I/A space */
+		reg-names = "elbi", "phy", "sysreg", "dbi", "pcs", "config", "ia";
+		interrupts = <GIC_SPI INTREQ__PCIE_GEN4_0 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "msi";
+		#interrupt-cells = <1>;
+		samsung,syscon-phandle = <&pmu_system_controller>;
+		clocks = <&clock GATE_PCIE_GEN4_0_APB>, <&clock GATE_PCIE_GEN4_0_DBI>,
+			<&clock GATE_PCIE_GEN4_0_AXI>, <&clock GATE_PCIE_GEN4_0_PCS_APB>,
+			<&clock GATE_PCIE_GEN4_0_REF>, <&clock GATE_PCIE_GEN4_0_PMA_APB>;
+		pinctrl-names = "active";
+		pinctrl-0 = <&pcie1_clkreq &pcie1_perst>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		device_type = "pci";
+		/* non-prefetchable memory */
+		ranges = <0x82000000 0 0x12000000 0 0x12000000 0 0xFF0000>;
+		/* ranges = <0x82000000 0 0x11000000 0 0x11000000 0 0xFF0000>; */
+		/* S5100 doorbell target address: 0x12D0_02D0  */
+		ip-ver = <0x983000>;
+		num-lanes = <2>;
+		ch-num = <0>;
+		pcie-clk-num = <0>;
+		phy-clk-num = <0>;
+		pcie-pm-qos-int = <0>;
+		use-cache-coherency = "false";
+		use-msi = "false";
+		use-sicd = "false";
+		use-sysmmu = "false";
+		use-ia = "false";
+		pmu-offset = <0x71C>;
+		max-link-speed = <LINK_SPEED_GEN3>;
+		status = "disabled";
+	};
+
+	/* HSI2 GEN4_1 */
+	pcie_2:	pcie@13D20000 {
+		compatible = "samsung,exynos-pcie-rc";
+		gpios = <&gpf3 1 0x1 /* PERST */>;
+		reg = <0x0 0x13D20000 0x2000    /* elbi base */
+			0x0 0x13D50000 0x2000   /* phy base */
+			0x0 0x13C20000 0x2000     /* sysreg base */
+			0x0 0x13800000 0x301000   /* DBI base */
+			0x0 0x13D40000 0x1000    /* phy pcs base */
+			0x0 0x14FFE000 0x2000   /* configuration space */
+			0x0 0x13D00000 0x1000>; /* I/A space */
+		reg-names = "elbi", "phy", "sysreg", "dbi", "pcs", "config", "ia";
+		interrupts = <GIC_SPI INTREQ__PCIE_GEN4_1 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "msi";
+		#interrupt-cells = <1>;
+		samsung,syscon-phandle = <&pmu_system_controller>;
+		clocks = <&clock GATE_PCIE_GEN4_0_APB>, <&clock GATE_PCIE_GEN4_0_DBI>,
+			<&clock GATE_PCIE_GEN4_0_AXI>, <&clock GATE_PCIE_GEN4_0_PCS_APB>,
+			<&clock GATE_PCIE_GEN4_0_REF>, <&clock GATE_PCIE_GEN4_0_PMA_APB>;
+		pinctrl-names = "active";
+		pinctrl-0 = <&pcie2_clkreq &pcie2_perst>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		device_type = "pci";
+		/* non-prefetchable memory */
+		/* S5100 doorbell target address: 0x12D0_02D0  */
+		ranges = <0x82000000 0 0x14D00000 0 0x14000000 0 0xFF0000>;
+		/* ranges = <0x82000000 0 0x14000000 0 0x14000000 0 0xFF0000>; */
+		ip-ver = <0x983000>;
+		num-lanes = <2>;
+		ch-num = <1>;
+		pcie-clk-num = <0>;
+		phy-clk-num = <0>;
+		pcie-pm-qos-int = <200000>;
+		use-cache-coherency = "true";
+		use-pcieon-sleep = "true";
+		use-msi = "false";
+		use-sicd = "true";
+		use-sysmmu = "false";
+		use-ia = "true";
+		pmu-offset = <0x720>;
+		max-link-speed = <LINK_SPEED_GEN3>;
+		status = "disabled";
+	};
+};

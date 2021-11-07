@@ -1,0 +1,91 @@
+/* Copyright (c) 2013, Samsung Electronics Corporation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&usi_12_i2c {
+	usi_v2_mode = "i2c";
+	status = "okay";
+};
+
+/* PERIC1 USI12_I2C */
+&hsi2c_25 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	sec-nfc@27 {
+		compatible = "sec-nfc";
+		reg = <0x27>;
+
+		interrupts = <2 0 0>;
+		interrupt-parent = <&gpa1>;
+
+		sec-nfc,ven-gpio = <&expander_gpios 11 0>;
+		sec-nfc,irq-gpio = <&gpa1 2 0>;
+		sec-nfc,firm-gpio = <&expander_gpios 9 0>;
+		sec-nfc,clk_req-gpio = <&gpa2 6 0xf>;
+		sec-nfc,nfc_pvdd = "VDD_NFC_1P8";
+		sec-nfc,coldreset-gpio = <&gpa0 0 0>;
+
+		clocks = <&clock OSC_NFC>;
+		clock-names = "oscclk_nfc";
+		sec-nfc,nfc_ap_clk;
+		sec-nfc,ldo_control;
+	};
+};
+
+&pinctrl_5 {
+	spi10_bus_suspend: spi10-bus-suspend {
+		samsung,pins = "gpp7-2", "gpp7-1", "gpp7-0";
+		samsung,pin-function = <0>;	/* INPUT */
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <0>;
+	};
+	spi10_cs_suspend: spi10-cs-suspend {
+		samsung,pins = "gpp7-3";
+		samsung,pin-function = <0>;	/* INPUT */
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <0>;
+	};
+};
+
+&usi_10 {
+	usi_v2_mode = "spi";
+	status = "okay";
+};
+
+/* SPI USI_PERIC1_USI10_SPI */
+&spi_10 {
+	status = "okay";
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+	pinctrl-names = "ese_active", "ese_suspend";
+	pinctrl-0 = <&spi10_bus &spi10_cs>;
+	pinctrl-1 = <&spi10_bus_suspend &spi10_cs_suspend>;
+
+	ese_spi@0 {
+		compatible = "ese_p3";
+		reg = <0>;
+		spi-max-frequency = <13000000>;
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		p3-vdd-1p8= "VDD_ESE_1P8";
+
+		clocks = <&clock GATE_PERIC1_TOP1_QCH_USI10_USI>, <&clock DOUT_CLK_PERIC1_USI10_USI>;
+		clock-names = "pclk", "sclk";
+		ese_p3,cs-gpio = <&gpp7 3 0>;
+
+		controller-data {
+			samsung,spi-feedback-delay = <0>;
+			samsung,spi-chip-select-mode = <0>;
+		};
+	};
+};

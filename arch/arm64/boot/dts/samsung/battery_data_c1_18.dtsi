@@ -1,0 +1,161 @@
+/*
+ * SAMSUNG UNIVERSAL9830 board device tree source
+ *
+ * Copyright (c) 2018 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "battery_data_c1_common.dtsi"
+/ {
+	fragment@battery {
+		target-path = "/";
+		__overlay__ {
+			battery {
+				battery,temp_table_adc = <309 355 410 477 554 645 751 871 1016 1177 1358
+					1560 1780 2009 2249 2491 2727 2950 3153 3333 3485 3612 3720>;
+				battery,temp_table_data = <900 850 800 750 700 650 600 550 500 450 400
+					350 300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,usb_temp_table_adc = <290 339 398 469 550 644 755 880 1025 1189 1371
+					1574 1790 2017 2251 2487 2713 2917 3114 3288 3434 3558 3658>;
+				battery,usb_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400
+					350 300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,chg_temp_table_adc = <261 309 363 430 508 599 706 823 973 1133 1317
+					1508 1742 1972 2214 2457 2660 2919 3132 3310 3467 3600 3710>;
+				battery,chg_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400
+					350 300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,wpc_temp_table_adc = <309 355 410 477 554 645 751 871 1016 1177 1358
+					1560 1780 2009 2249 2491 2727 2950 3153 3333 3485 3612 3720>;
+				battery,wpc_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400
+					350 300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,dchg_temp_table_adc = <103224 124338 147798 178296 211140 251022 297942 349554 415242 487968 570078
+					656880 757758 860982 968898 1079160 1170654 1285608 1377102 1459212 1524900 1585896 1635162>;
+				battery,dchg_temp_table_data = <900 850 800 750 700 650 600 550 500 450 400
+					350 300 250 200 150 100 50 0 (-50) (-100) (-150) (-200)>;
+
+				battery,swelling_low_temp_current = <900>;	/* 0.24C */
+				battery,swelling_low_temp_current_2nd = <350>;	/* 0.1C */
+				battery,swelling_low_temp_current_3rd = <2750>;	/* 0.72C */
+				battery,swelling_low_temp_topoff = <194>;	/* 0.05C */
+				battery,swelling_high_temp_current = <1350>;	/* 0.36C */
+				battery,swelling_high_temp_topoff = <194>;	/* 0.05C */
+				battery,swelling_wc_high_temp_current = <900>;	/* 0.24C */
+				battery,swelling_wc_low_temp_current = <900>;	/* 0.24C */
+ 				battery,swelling_wc_low_temp_current_2nd = <350>;	/* 0.1C */
+				battery,swelling_wc_low_temp_current_3rd = <2750>;	/* 0.72C */
+				battery,swelling_low_rechg_thr = <180>;
+
+				battery,swelling_drop_float_voltage = <4150>;
+				battery,swelling_high_rechg_voltage = <4000>;
+
+				battery,full_condition_vcell = <4330>;
+				battery,recharge_condition_vcell = <4310>;
+				battery,chg_float_voltage = <4380>;
+
+				battery,chg_high_temp = <470>;
+				battery,chg_high_temp_recovery = <450>;
+
+				battery,dchg_high_temp = <500>;
+				battery,dchg_high_temp_recovery = <440>;
+				battery,dchg_high_batt_temp = <400>;
+				battery,dchg_high_batt_temp_recovery = <380>;
+
+				battery,battery_full_capacity = <4000>;
+
+				/* cycle, chg_float_voltage, recharge_condition_vcell, full_condition_vcell, full_condition_soc */
+				battery,age_data = <0 4380 4310 4330 93
+						300 4360 4290 4310 92
+						400 4340 4270 4290 91
+						700 4320 4250 4270 90
+						1000 4270 4200 4220 89>;
+
+				battery,cisd_max_voltage_thr = <4430>; /* battery ovp detection voltage */
+
+				/* step charging option */
+				battery,step_charging_type = <0>;
+
+				/* direct step charging option */
+				battery,dc_step_chg_cond_vol = <4110 4210 4380>; /* STEP_CHARGING_CONDITION_VOLTAGE */
+				battery,dc_step_chg_cond_iin = <1800 1610 0>; /* STEP_CHARGING_CONDITION_INPUT_CURRENT */
+				battery,dc_step_chg_val_vfloat = <4110 4210 4380>; /* STEP_CHARGING_CONDITION_FLOAT_VOLTAGE */
+				battery,dc_step_chg_val_iout = <4690 3600 3220>;
+				battery,dc_step_chg_cond_soc = <25 55 100 25 55 100 25 55 100 25 55 100 25 55 100>; /* STEP_CHARGING_CONDITION_SOC */
+			};
+
+			max77705-fuelgauge {
+				fuelgauge,qrtable20 = <0x1500>;
+				fuelgauge,qrtable30 = <0x1000>;
+				fuelgauge,capacity = <0x8FC>;
+				/* fullcapnom(=capacity), dPacc, dQacc,  rcomp0, tempco */
+				fuelgauge,fg_reset_wa_data = <0x8FC 0x3200 0x023E 0x0036 0x293A>;
+				fuelgauge,ttf_capacity = <2600>;
+			};
+
+			cable-info {
+				full_check_current_1st = <582>;
+				full_check_current_2nd = <194>;
+
+				current_group_6 {
+					charging_current = <3150>;
+				};
+				current_group_7 {
+					charging_current = <3150>;
+				};
+				current_group_10 {
+					charging_current = <3150>;
+				};
+				current_group_13 {
+					charging_current = <3150>;
+				};
+			};
+
+			wireless-power-info {
+				current_group_0 {
+					fast_charging_current = <2775>;
+				};
+				current_group_1 {
+					fast_charging_current = <2775>;
+				};
+				current_group_2 {
+					input_current_limit = <925>;
+					fast_charging_current = <2775>;
+				};
+				current_group_3 {
+					input_current_limit = <1200>;
+					fast_charging_current = <2775>;
+				};
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+};
+
+
+#define FOD_FLAG_NONE			0
+#define FOD_FLAG_ADD			1
+#define FOD_FLAG_USE_CC			2
+#define FOD_FLAG_USE_DEFAULT	3
+#define SET_FOD_CC(_flag)		(FOD_FLAG_ ##_flag)
+#define SET_FOD_CV(_flag)		(FOD_FLAG_ ##_flag << 4)
+#define SET_FOD_FULL(_flag)		(FOD_FLAG_ ##_flag << 8)
+
+&hsi2c_6 {
+	mfc-charger@3b {
+		fod_list {
+			count = <1>;
+
+			pad_0x00 { /* DEFAULT */
+				flag = <(SET_FOD_CC(ADD) | SET_FOD_CV(ADD) | SET_FOD_FULL(ADD))>;
+				cc = <150 58 142 48 150 31 150 26 155 7 156 6>;
+				cv = <150 88 142 78 150 61 150 56 155 37 156 36>;
+				full = <255 127 255 127 255 127 255 127 255 127 255 127>;
+			};
+		};
+	};
+};

@@ -1,0 +1,548 @@
+/*
+ * Samsung CP interface device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *             http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include <dt-bindings/soc/samsung/exynos-cpif.h>
+#include <dt-bindings/pci/pci.h>
+
+/ {
+	fragment@modemif {
+		target-path = "/";
+		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			/* Modem interface information */
+			cpif {
+				compatible = "samsung,exynos-cp";
+				status = "okay";
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&s5100_ap2cp_cp_pwr_on>,
+					<&s5100_ap2cp_cp_nreset_n>,
+					<&s5100_cp2ap_cp_ps_hold>,
+					<&s5100_ap2cp_wakeup>,
+					<&s5100_cp2ap_wakeup>,
+					<&s5100_ap2cp_dump_noti>,
+					<&s5100_ap2cp_pda_active>,
+					<&s5100_cp2ap_phone_active>;
+
+				/* Definition of GPIOs */
+				gpio_ap2cp_cp_pwr_on =	<&gpm20 0 0x1>;
+				gpio_ap2cp_nreset_n =	<&gpm9 0 0x1>;
+				gpio_cp2ap_cp_ps_hold =	<&gpm31 0 0x1>;
+
+				gpio_ap2cp_wake_up =	<&gpg1 3 0x1>;
+				gpio_cp2ap_wake_up =	<&gpm30 0 0x1>;
+				gpio_ap2cp_dump_noti =	<&gpp8 6 0x1>;
+				gpio_ap2cp_pda_active =	<&gpm25 0 0x1>;
+				gpio_cp2ap_phone_active = <&gpm28 0 0x1>;
+
+				pci_ch_num = <1>;
+				pci_db_addr = <0x14D60000>;
+				cpboot_spi_bus_num = <16>;
+
+				/* */
+				mif,name = "s5123";
+				mif,cp_num = <0>;
+				mif,modem_type = <SEC_S5100>;
+				mif,use_handover = <0>;		/* Not used */
+				mif,protocol = <PROTOCOL_SIPC>;
+				mif,ipc_version = <SIPC_VER_50>;
+				mif,link_type = <LINKDEV_PCIE>;
+				mif,link_name = "PCIE";
+				mif,link_attrs = <(LINK_ATTR_MASK_XMIT_BTDLR_SPI | LINK_ATTR_MASK_XMIT_BTDLR |
+							LINK_ATTR_MASK_DUMP_ALIGNED | LINK_ATTR_MASK_BOOT_ALIGNED |
+							LINK_ATTR_MASK_MEM_DUMP | LINK_ATTR_MASK_MEM_BOOT |
+							LINK_ATTR_MASK_DPRAM_MAGIC | LINK_ATTR_MASK_SBD_IPC)>;
+				mif,interrupt_types = <INTERRUPT_GPIO>;
+
+				/* Mailbox interrupt number from AP to CP */
+				mif,int_ap2cp_msg = <0>;
+				mif,int_ap2cp_wakeup = <1>;
+				mif,int_ap2cp_status = <2>;
+				mif,int_ap2cp_active = <3>;
+				mif,int_ap2cp_lcd_status = <4>;
+				mif,int_ap2cp_pcie_link_ack = <14>;
+				mif,int_ap2cp_uart_noti = <15>;
+
+				/* Mailbox interrupt number from CP to AP */
+				mif,irq_cp2ap_msg = <0>;
+				mif,irq_cp2ap_status = <2>;
+				mif,irq_cp2ap_active = <3>;
+				mif,irq_cp2ap_wakelock = <8>;
+				mif,irq_cp2ap_ratmode = <9>;
+
+				/* Legacy Buffers (FMT, RAW) */
+				legacy_fmt_head_tail_offset = <0x8>;
+				legacy_fmt_buffer_offset = <0x1000>;
+				legacy_fmt_txq_size = <0x1000>;
+				legacy_fmt_rxq_size = <0x1000>;
+				legacy_raw_head_tail_offset = <0x18>;
+				legacy_raw_buffer_offset = <0x3000>;
+				legacy_raw_txq_size = <0x1FD000>;
+				legacy_raw_rxq_size = <0x200000>;
+
+				/*
+				 * Control messages containing two elements
+				 * <MAILBOX_SR [shared register number]>
+				 * <DRAM_V1   [offset from ipc base]>
+				 * <DRAM_V2   [cmsg start offset from ipc base]>
+				 */
+				ap2cp_msg = <DRAM_V1 1024>;
+				cp2ap_msg = <DRAM_V1 1028>;
+				ap2cp_united_status = <DRAM_V1 1032>;
+				cp2ap_united_status = <DRAM_V1 1036>;
+				ap2cp_kerneltime = <DRAM_V1 1060>;
+
+				/* srinfo settings */
+				srinfo_offset = <SRINFO_SBD_OFFSET>;
+				srinfo_size = <SRINFO_SIZE>;
+				/* clk_table offset */
+				clk_table_offset = <40>;
+
+				/* Status bit info for mbx_ap2cp_united_status */
+				sbi_lcd_status_mask = <0x1>;
+				sbi_lcd_status_pos = <27>;
+				sbi_crash_type_mask = <0xf>;
+				sbi_crash_type_pos = <23>;
+				sbi_uart_noti_mask = <0x1>;
+				sbi_uart_noti_pos = <16>;
+				sbi_ds_det_mask = <0x3>;
+				sbi_ds_det_pos = <14>;
+				sbi_pda_active_mask = <0x1>;
+				sbi_pda_active_pos = <5>;
+				sbi_ap_status_mask = <0xf>;
+				sbi_ap_status_pos = <1>;
+
+				/* Status bit info for mbx_cp2ap_united_status */
+				sbi_cp_rat_mode_mask = <0x3f>;
+				sbi_cp_rat_mode_pos = <26>;
+				sbi_cp2ap_wakelock_mask = <0x1>;
+				sbi_cp2ap_wakelock_pos = <6>;
+				sbi_lte_active_mask = <0x1>;
+				sbi_lte_active_pos = <5>;
+				sbi_cp_status_mask = <0xf>;
+				sbi_cp_status_pos = <1>;
+
+				/* Status bit info for mbx_ap2cp_kerneltime */
+				sbi_ap2cp_kerneltime_sec_mask = <0xfff>;
+				sbi_ap2cp_kerneltime_sec_pos = <20>;
+				sbi_ap2cp_kerneltime_usec_mask = <0xfffff>;
+				sbi_ap2cp_kerneltime_usec_pos = <0>;
+
+                                /* CP BTL (Back Trace Log) */
+                                cp_btl_node_name = "ramdump_memshare";
+
+				/* Packet processor */
+				pktproc_support = <1>;
+				pktproc_version = <2>;
+
+				pktproc_cp_base = <0x28000000>;
+				pktproc_info_rgn_offset = <0x00000000>;
+				pktproc_info_rgn_size = <0x00000100>;
+				pktproc_desc_rgn_offset = <0x00000100>;
+				pktproc_desc_rgn_size = <0x000FFF00>;
+				pktproc_data_rgn_offset = <0x00100000>;
+				/* Size of data region is defined by reserved mem size */
+
+				pktproc_desc_mode = <1>;	/* Descriptor structure mode. 0:ringbuf mode, 1:sktbuf mode */
+				pktproc_desc_num_ratio_percent = <25>;
+				pktproc_num_queue = <1>;
+				pktproc_use_exclusive_irq = <0>;
+				pktproc_use_hw_iocc = <1>;	/* H/W IO cache coherency */
+
+				/* Throughput monitor */
+				enable_rps_boost = <1>;
+				tp_rps_threshold = <300 500>;
+				tp_rps_cpu_mask = <0x0E 0x30 0xD0>;
+
+				enable_gro_boost = <1>;
+				tp_gro_threshold = <100 200>;
+				tp_gro_flush_nsec = <10000 50000 100000>;
+
+				enable_irq_affinity_boost = <1>;
+				tp_irq_affinity_threshold = <500>;
+				tp_irq_affinity_cpu = <0 5>;
+
+				enable_mif_boost = <0>;
+
+				enable_pci_low_power_boost = <1>;
+				tp_pci_low_power_threshold = <50>;
+				tp_pci_low_power_enable = <1 0>;
+
+				/* IO devices */
+				mif,num_iodevs = <22>;
+				iodevs {
+					io_device_0 {
+						iod,name = "umts_cass";
+						iod,ch = <35>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x2082>;		/* ? | ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,max_tx_size = <2048>;
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <16>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_1 {
+						iod,name = "umts_ipc0";
+						iod,ch = <235>;
+						iod,format = <0>;		/* IPC_FMT */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <4096>;
+						iod,dl_num_buffers = <32>;
+						iod,dl_buffer_size = <4096>;
+					};
+					io_device_2 {
+						iod,name = "umts_ipc1";
+						iod,ch = <236>;
+						iod,format = <0>;		/* IPC_FMT */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <4096>;
+						iod,dl_num_buffers = <32>;
+						iod,dl_buffer_size = <4096>;
+					};
+					io_device_3 {
+						iod,name = "umts_rfs0";
+						iod,ch = <245>;
+						iod,format = <2>;		/* IPC_RFS */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <512>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_4 {
+						iod,name = "umts_csd";
+						iod,ch = <1>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <32>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <64>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_5 {
+						iod,name = "umts_router";
+						iod,ch = <25>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <16>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_6 {
+						iod,name = "umts_dm0";
+						iod,ch = <28>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <128>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_7 {
+						iod,name = "ipc_loopback0";
+						iod,ch = <244>;
+						iod,format = <0>;		/* IPC_FMT */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x82>;		/* ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <32>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_8 {
+						iod,name = "rmnet0";
+						iod,ch = <10>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_9 {
+						iod,name = "rmnet1";
+						iod,ch = <11>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_10 {
+						iod,name = "rmnet2";
+						iod,ch = <12>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_11 {
+						iod,name = "rmnet3";
+						iod,ch = <13>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_12 {
+						iod,name = "rmnet4";
+						iod,ch = <14>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_13 {
+						iod,name = "rmnet5";
+						iod,ch = <15>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_14 {
+						iod,name = "rmnet6";
+						iod,ch = <16>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_15 {
+						iod,name = "rmnet7";
+						iod,ch = <17>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_NET>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <0>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <0>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_16 {
+						iod,name = "multipdp_hiprio";
+						iod,ch = <0>;
+						iod,format = <3>;		/* IPC_MULTI_RAW */
+						iod,io_type = <IODEV_DUMMY>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <1024>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <256>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_17 {
+						iod,name = "multipdp";
+						iod,ch = <0>;
+						iod,format = <3>;		/* IPC_MULTI_RAW */
+						iod,io_type = <IODEV_DUMMY>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x180>;		/* ATTR_NO_LINK_HDR | ATTR_SBD_IPC */
+						iod,ul_num_buffers = <512>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <1024>;
+						iod,dl_buffer_size = <2048>;
+					};
+					io_device_18 {
+						iod,name = "umts_boot0";
+						iod,ch = <215>;
+						iod,format = <4>;		/* IPC_BOOT */
+						iod,io_type = <IODEV_BOOTDUMP>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x02>;		/* ATTR_SIPC5 */
+					};
+					io_device_19 {
+						iod,name = "umts_ramdump0";
+						iod,ch = <225>;
+						iod,format = <5>;		/* IPC_DUMP */
+						iod,io_type = <IODEV_BOOTDUMP>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x202>;		/* ATTR_NO_CHECK_MAXQ | ATTR_SIPC5 */
+					};
+					io_device_20 {
+						iod,name = "smd4";
+						iod,ch = <33>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x882>;		/* ATTR_OPTION_REGION | ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <128>;
+						iod,dl_buffer_size = <2048>;
+						iod,option_region = "kor_skt";
+					};
+					io_device_21 {
+						iod,name = "umts_ciq0";
+						iod,ch = <26>;
+						iod,format = <1>;		/* IPC_RAW */
+						iod,io_type = <IODEV_IPC>;
+						iod,link_type = <LINKDEV_PCIE>;
+						iod,attrs = <0x882>;		/* ATTR_OPTION_REGION | ATTR_SBD_IPC | ATTR_SIPC5 */
+						iod,ul_num_buffers = <16>;
+						iod,ul_buffer_size = <2048>;
+						iod,dl_num_buffers = <128>;
+						iod,dl_buffer_size = <2048>;
+						iod,option_region = "usa_spr";
+					};
+				}; /* end of iodevs */
+			}; /* end of cpif */
+
+			/* Shared memory information*/
+			cp_shmem {
+				compatible = "samsung,exynos-cp-shmem";
+
+				cp_num = <0>;
+				use_mem_map_on_cp = <0>;
+
+				regions {
+					ipc {
+						region,name = "IPC";
+						region,index = <SHMEM_IPC>;
+						region,rmem = <0>;
+						region,offset = <0x00000000>;
+						region,size = <0x00800000>;
+						region,cached = <1>;
+					};
+					msi {
+						region,name = "MSI";
+						region,index = <SHMEM_MSI>;
+						region,rmem = <1>;
+						region,offset = <0x00000000>;
+						region,size = <0x00001000>;
+						region,cached = <0>;
+					};
+					pktproc {
+						region,name = "PKTPROC";
+						region,index = <SHMEM_PKTPROC>;
+						region,rmem = <2>;
+						region,offset = <0x00000000>;
+						region,size = <0x04000000>;
+						region,cached = <1>;	/* set pktproc_use_hw_iocc instead of this */
+					};
+				};
+			}; /* end of cp_shmem */
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&spi_16 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi16_bus &spi16_cs_func>;
+	cpboot_spi@0 {
+		compatible = "samsung,exynos-cp-spi";
+		reg = <0x0>;
+		spi-max-frequency = <2150000>;
+		controller-data {
+			samsung,spi-feedback-delay = <0>;
+			samsung,spi-chip-select-mode = <1>;
+		};
+	};
+}; /* end of spi_16 */
+
+&pinctrl_1 {
+	s5100_ap2cp_cp_nreset_n: s5100_ap2cp_cp_nreset_n {
+		samsung,pins = "gpm9-0";
+		samsung,pin-pud = <0>;
+	};
+
+	s5100_ap2cp_cp_pwr_on: s5100_ap2cp_cp_pwr_on {
+		samsung,pins = "gpm20-0";
+		samsung,pin-pud = <0>;
+		samsung,pin-pud-pdn = <0>;
+	};
+
+	s5100_ap2cp_pda_active: s5100_ap2cp_pda_active {
+		samsung,pins = "gpm25-0";
+		samsung,pin-pud = <1>;
+	};
+
+	s5100_cp2ap_phone_active: s5100_cp2ap_phone_active {
+		samsung,pins = "gpm28-0";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+	};
+
+	s5100_cp2ap_wakeup: s5100_cp2ap_wakeup {
+		samsung,pins = "gpm30-0";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+	};
+
+	s5100_cp2ap_cp_ps_hold: s5100_cp2ap_cp_ps_hold {
+		samsung,pins = "gpm31-0";
+		samsung,pin-pud = <1>;
+	};
+};
+
+&pinctrl_5 {
+	s5100_ap2cp_wakeup: s5100_ap2cp_wakeup {
+		samsung,pins = "gpg1-3";
+		samsung,pin-pud = <1>;
+		samsung,pin-con-pdn = <3>;
+	};
+
+	s5100_ap2cp_dump_noti: s5100_ap2cp_dump_noti {
+		samsung,pins = "gpp8-6";
+		samsung,pin-pud = <0>;
+		samsung,pin-con-pdn = <3>;
+	};
+};

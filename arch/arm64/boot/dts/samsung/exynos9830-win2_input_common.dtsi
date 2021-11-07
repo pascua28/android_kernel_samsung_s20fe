@@ -1,0 +1,162 @@
+/*
+ * SAMSUNG EXYNOS9830 input device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/ {
+
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			gpio_keys {
+				status = "okay";
+				compatible = "gpio-keys";
+				pinctrl-names = "default";
+				pinctrl-0 = <&key_voldown &key_volup &key_power>;
+
+				button@2 {
+					label = "gpio-keys: KEY_VOLUMEDOWN";
+					linux,code = <114>;
+					gpios = <&gpa0 4 0xf>;
+				};
+				button@3 {
+					label = "gpio-keys: KEY_VOLUMEUP";
+					linux,code = <115>;
+					gpios = <&gpa0 3 0xf>;
+				};
+				button@4 {
+					label = "gpio-keys: KEY_POWER";
+					linux,code = <116>;
+					gpios = <&gpa2 4 0xf>;
+					gpio-key,wakeup = <1>;
+				};
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&pinctrl_0 {
+	key_voldown: key-voldown {
+		samsung,pins = "gpa0-4";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	key_volup: key-volup {
+		samsung,pins = "gpa0-3";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	key_power: key-power {
+		samsung,pins = "gpa2-4";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	attn_irq: attn-irq {
+		samsung,pins = "gpa1-0";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+
+	attn_input: attn-input {
+		samsung,pins = "gpa1-0";
+		samsung,pin-function = <0>;
+		samsung,pin-pud = <1>;
+	};
+
+	sub_tsp_irq: sub_tsp_irq {
+		samsung,pins = "gpa3-7";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+};
+
+&pinctrl_5 {
+	tspi2c_bus: tspi2c-bus {
+		samsung,pins = "gpp5-6", "gpp5-7";
+		samsung,pin-function = <3>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+	};
+};
+
+&hsi2c_15 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&tspi2c_bus>;
+	status = "okay";
+	samsung,reset-before-trans;
+
+	touchscreen@49 {
+		status = "ok";
+		compatible = "stm,fts_touch";
+		reg = <0x49>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&attn_irq>;
+		stm,irq_gpio = <&gpa1 0 0>;
+		stm,irq_type = <8200>;
+		stm,max_coords = <4095 4095>;	/* x y */
+		stm,regulator_dvdd = "tsp_io";//"s2dos05-ldo2";
+		stm,regulator_avdd = "tsp_avdd";//"s2dos05-ldo3";
+		stm,project_name = "WINNER", "F900";
+	//	stm,firmware_name = "tsp_stm/fts9cu80f_winner.fw";
+		stm,tclm_level = <1>;
+	//	stm,afe_base = <0x0621>;
+		stm,enable_settings_aot;
+		support_dex_mode;
+		stm,bringup = <1>;
+	//	stm,ss_touch_num = <1>;
+	};
+};
+
+&usi_6_i2c {
+	usi_v2_mode = "i2c";
+	status = "okay";
+};
+
+/* USI06_USI_I2C */
+&hsi2c_13 {
+	status = "okay";
+	samsung,reset-before-trans;
+	samsung,stop-after-trans;	/* LSI IC ONLY */
+
+	touchscreen@48 {
+		status = "ok";
+		compatible = "sec,sec_ts";
+		reg = <0x48>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&sub_tsp_irq>;
+		sec,irq_gpio = <&gpa3 7 0>;
+		sec,irq_type = <0x2008>;
+		sec,max_coords = <720 1280>; /* x y */
+		sec,mis_cal_check = <1>;
+		sec,regulator_dvdd = "sub_tsp_io";
+		sec,regulator_avdd = "sub_tsp_avdd";
+		sec,regulator_boot_on;
+		sec,tclm_level = <1>;
+	//	sec,afe_base = <0x0208>;
+		sec,project_name = "WINNER", "F900";
+	//	sec,firmware_name = "tsp_sec/y761_winner.bin";
+		sec,i2c-burstmax = <0x01000000>;
+		sec,factory_item_version = <2>;
+	//	sec,ss_touch_num = <2>;
+		support_dex_mode;
+		sec,bringup = <1>;
+	};
+};

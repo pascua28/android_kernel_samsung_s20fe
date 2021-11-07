@@ -1,0 +1,304 @@
+/*
+ * SAMSUNG EXYNOS990 board device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/plugin/;
+#include "exynos9830-z3s_pm_20.dtsi"
+#include "exynos990-z3s_common.dtsi"
+#include "exynos9830-z3s_camera_csi_16.dtsi"
+#include "exynos_gpio_config_macros.dtsi"
+#include "exynos9830-picasso_nfc_17.dtsi"
+#include "../exynos/exynos9830-universal9830-cp-s5123-sipc.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include "exynos9830-sensorhub_03.dtsi"
+#include "exynos9830-hubblez3_fingerprint_00.dtsi"
+#include "battery_data_hubblez3_00.dtsi"
+
+#define BOARD_ID	0x10
+#define BOARD_REV	0x0
+
+/ {
+	compatible = "samsung,Z3S EUR OPEN 20", "samsung,EXYNOS990";
+	dtbo-hw_rev = <20>;
+	dtbo-hw_rev_end = <20>;
+	edtbo-rev = <0>;
+
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			model = "Samsung Z3S EUR OPEN 20 based on EXYNOS990";
+
+			acpm_ipc {
+				compatible = "samsung,exynos-acpm-ipc";
+				board-id = <BOARD_ID>;
+				board-rev = <BOARD_REV>;
+			};
+
+			pinctrl@15850000 {
+				bt_hostwake: bt-hostwake {
+					samsung,pins = "gpa2-3";
+					samsung,pin-function = <0xF>;
+					samsung,pin-pud = <1>;
+				};
+			};
+
+			pinctrl@10730000 {
+				bt_btwake: bt-btwake {
+					samsung,pins = "gpg1-1";
+					samsung,pin-function = <1>;
+					samsung,pin-pud = <0>;
+					samsung,pin-con-pdn = <3>;
+					samsung,pin-pud-pdn = <0>;
+				};
+			};
+
+			pinctrl@15C30000 {
+				bt_en: bt-en {
+					samsung,pins = "gpm16-0";
+					samsung,pin-function = <1>;
+					samsung,pin-pud = <0>;
+					samsung,pin-con-pdn = <3>;
+					samsung,pin-pud-pdn = <0>;
+				};
+			};
+
+			bluetooth {
+				compatible = "samsung,bcm43xx";
+				gpios = <&gpm16 0 GPIO_ACTIVE_HIGH    /*BT_EN*/
+				&gpg1 1 GPIO_ACTIVE_HIGH    /*BT_WAKE*/
+				&gpa2 3 GPIO_ACTIVE_HIGH    /*BT_HOST_WAKE*/ >;
+				pinctrl-names = "default";
+				pinctrl-0=<&bt_en &bt_hostwake &bt_btwake>;
+				status = "okay";
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+
+	fragment@camera {
+		target-path = "/";
+		__overlay__ {
+			/* REAR CAMERA */
+			is_sensor_hm1: is_sensor_hm1@20 {
+				power_seq {
+					scenario_normal_on {
+						20 { pname = "VDDIO_1.8V_CAM"; pin = <PIN_REGULATOR 1 30000>; share = <SRT_ACQUIRE SHARED_PIN2 1>; };
+					};
+				};
+			};
+
+			/* FRONT CAMERA */
+			is_sensor_gh1: is_sensor_gh1@10 {
+				power_seq {
+					scenario_normal_on {
+						30 { pname = "VDDIO_1.8V_VT"; pin = <PIN_REGULATOR 1 11000>; };
+					};
+				};
+			};
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
+
+&panel_0 {
+	/* reset, power */
+	gpios = <&gpa3 4 0x1>;
+};
+
+&pinctrl_0 {
+	conn_det_ctrl: conn-det-ctrl {
+		samsung,pins = "gpa0-0";
+		samsung,pin-pud = <3>;
+	};
+};
+
+&panel_drv_0 {
+	pinctrl-0 = <&disp_det_ctrl &disp_te_ctrl &conn_det_ctrl>;
+	gpios {
+		conn-det {
+			name = "conn-det";
+			gpios = <&gpa0 0 0>; 		/* 0:NOK(active) 1:OK */
+			dir = <1>;  				/* IN */
+			irq-type = <0x00002001>;	/* RISING EDGE | ONE_SHOT */
+		};
+	};
+};
+
+&chosen {
+	bootargs_ext = "root=/dev/ram0 androidboot.boot_devices=13100000.ufs";
+};
+
+&usi_11 {
+	usi_v2_mode = "i2c";
+	status = "okay";
+};
+
+&usi_16 {
+	usi_v2_mode = "spi";
+	status = "okay";
+};
+
+&usi_03_cmgp {
+	usi_v2_mode = "i2c";
+	status = "okay";
+};
+
+&hsi2c_7 {
+	max77705@66 {
+		max77705,extra_fw_enable = <0>;
+	};
+};
+
+&pinctrl_1 {
+	hsi2c44_bus: hsi2c44-bus {
+		samsung,pins = "gpm12-0", "gpm13-0";
+		samsung,pin-function = <2>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
+	};
+};
+
+&pinctrl_5 {
+	aux_oe: aux-oe {
+		samsung,pins = "gpp6-2";
+		samsung,pin-function = <1>;
+		samsung,pin-pud = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+		};
+
+	sbu_sel: sbu-sel {
+		samsung,pins = "gpp6-1";
+		samsung,pin-function = <1>;
+		samsung,pin-pud = <0>;
+		samsung,pin-con-pdn = <3>;
+		samsung,pin-pud-pdn = <0>;
+		};
+};
+
+&displayport {
+	status = "okay";
+	dp,aux_sw_oe = <&gpp6 2 0>;
+	dp,sbu_sw_sel = <&gpp6 1 0>;
+	dp,usb_con_sel = <&gpm26 0 0>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&aux_oe &sbu_sel>;
+};
+
+&pcie_2 {
+	status = "okay";
+	chip-ver = <1>;
+	use-sysmmu = "false";
+	use-cache-coherency = "true";
+	use-msi = "true";
+	use-pcieon-sleep = "true";
+	phy-power-off = "false";
+	ep-device-type = <EP_SAMSUNG_MODEM>;
+	ep-device-name = "MODEM";
+};
+
+&ufs {
+	/* board type for UFS CAL */
+	evt-ver = /bits/ 8 <1>;
+};
+
+&hsi2c_39 { /* 15D10000 */
+	#address-cells = <1>;
+	#size-cells = <0>;
+	gpios = <&gpm2 0 0 &gpm3 0 0>;
+	status = "okay";
+	clock-frequency = <400000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&grip_i2c>;
+
+
+	a96t3x6-i2c@20{
+		compatible = "a96t3x6";
+		reg = <0x20>;
+		status = "okay";
+		pinctrl-names = "default";
+		pinctrl-0 = <&grip_irq &grip_ldo>;
+		interrupt-parent = <&gpa3>;
+		interrupts = <0 0 0>;
+
+		a96t3x6,irq_gpio = <&gpa3 0 0>;
+		a96t3x6,ldo_en = <&gpp9 3 0>;
+		a96t3x6,fw_path = "a96t365_z3s_eur.bin";
+		a96t3x6,firmup_cmd = <0x60>;
+	};
+};
+
+&spi_14 {
+	BCM4773@0 {
+		ssp-acc-position = <5>;
+		ssp-mag-position = <1>;
+		ssp-mag-array = /bits/ 8 <240 83 235 204 213 79 1 64 213 52 81 77 193 102 255 122 0 57 20 34
+					191 253 245 91 9 117 212>;
+		ssp-thermi-up = /bits/ 16 <3244 3216 3177 3127 3063 2987 2893 2785 2663 2522 2364 2191 2019 1841 1664 1492 1325 1165 1024 894 772 658 579>;
+		ssp-thermi-sub = /bits/ 16 <4095 4095 4095 4026 3810 3566 3300 3013 2725 2438 2142 1871 1626 1402 1202 1030 874 744 631 535 453 385 331>;
+	};
+};
+
+/* ----------------------------------------------------------------------------
+ * Configurations for GPIOs without Device Driver
+ * Note: Do NOT add pins using by device drivers to the configuration below
+ * ----------------------------------------------------------------------------
+ */
+/*
+ * pin banks of exynos9830 pin-controller 0 (ALIVE) : pinctrl@15850000
+ * GPA0, GPA1, GPA2, GPA3, GPA4
+ * GPQ0
+ */
+&pinctrl_0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&initial0>;
+	initial0: initial-state {
+		PIN_IN(gpq0-6, DOWN);			/* XSPEEDY_DCXO */
+	};
+};
+
+/*
+ * pin banks of exynos9830 pin-controller 4 (PERIC0) : pinctrl@10430000
+ * GPP0, GPP1, GPP2, GPP3, GPP4
+ * GPG0
+ */
+&pinctrl_4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&initial4>;
+	initial4: initial-state {
+		PIN_IN_SLP(gpp2-4, NONE, INPUT, NONE);	/* SUB_VER_1 */
+		PIN_IN_SLP(gpp2-5, NONE, INPUT, NONE);	/* SUB_VER_2 */
+	};
+};
+
+/*
+ * pin banks of exynos9830 pin-controller 5 (PERIC1) : pinctrl@10730000
+ * GPP5, GPP6, GPP7, GPP8, GPP9
+ * GPC0
+ * GPG1
+ * GPB0, GPB1, GPB2
+ */
+&pinctrl_5 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&initial5>;
+	initial5: initial-state {
+		PIN_IN_SLP(gpp5-0, NONE, INPUT, NONE);	/* MEM_SCL_1P8 */
+		PIN_IN_SLP(gpp5-1, NONE, INPUT, NONE);	/* MEM_SDA_1P8 */
+		PIN_IN_SLP(gpp5-5, NONE, INPUT, NONE);	/* HW_REV_M */
+		PIN_IN_SLP(gpb0-0, NONE, INPUT, NONE);	/* INTERPOSER_DET_R_2 */
+		PIN_IN_SLP(gpb0-1, NONE, INPUT, NONE);	/* INTERPOSER_DET_R_1 */
+		PIN_IN_SLP(gpb0-2, NONE, INPUT, NONE);	/* INTERPOSER_DET_L_1 */
+		PIN_IN_SLP(gpb0-3, NONE, INPUT, NONE);	/* INTERPOSER_DET_L_2 */
+	};
+};

@@ -1,0 +1,108 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&pinctrl_0 {
+	uwb_int: uwb-int {
+		samsung,pins = "gpa3-7";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <3>;
+		samsung,pin-con-pdn = <2>;	/* IN */
+		samsung,pin-pud-pdn = <1>;	/* DOWN */
+	};
+};
+
+&pinctrl_1 {
+	uwb_ce: uwb-ce {
+		samsung,pins = "gpm21-0";
+		samsung,pin-function = <1>;	/* OUT */
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <0>;	/* OUT */
+		samsung,pin-pud-pdn = <1>;	/* DOWN */
+	};
+};
+
+&pinctrl_4 {
+	uwb_wakeup: uwb-wakeup {
+		samsung,pins = "gpp2-6";
+		samsung,pin-function = <1>;	/* OUT */
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <0>;	/* OUT */
+		samsung,pin-pud-pdn = <1>;	/* DOWN */
+	};
+};
+
+&pinctrl_5 {
+	uwb_ri: uwb-ri {
+		samsung,pins = "gpp5-4";
+		samsung,pin-function = <1>;	/* OUT */
+		samsung,pin-pud = <1>;		/* DOWN */
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <0>;	/* OUT */
+		samsung,pin-pud-pdn = <1>;	/* DOWN */
+	};
+	spi9_bus: spi9-bus {
+		samsung,pins = "gpp6-6", "gpp6-5", "gpp6-4";
+		samsung,pin-function = <2>;	/* SPI */
+		samsung,pin-pud = <0>;		/* NO */
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <2>;	/* IN */
+		samsung,pin-pud-pdn = <1>;	/* DOWN */
+	};
+	spi9_cs_func: spi9-cs-func {
+		samsung,pins = "gpp6-7";
+		samsung,pin-function = <2>;	/* SPI */
+		samsung,pin-pud = <3>;		/* UP */
+		samsung,pin-drv = <0>;
+		samsung,pin-con-pdn = <2>;	/* IN */
+		samsung,pin-pud-pdn = <3>;	/* UP */
+	};
+};
+
+/* SPI USI_PERIC1_USI09_SPI */
+&spi_9 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi9_bus &spi9_cs_func>;
+
+	uwb_spi@0 {
+		compatible = "nxp,sr100";
+		reg = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&uwb_int &uwb_ce &uwb_wakeup &uwb_ri>;
+		spi-max-frequency = <16000000>;
+		interrupt-parent = <&gpa3>;
+		interrupts = <7 0 0>;
+
+		swap-mode;
+		gpio-controller;
+		#gpio-cells = <2>;
+		/* GPIO05_SENSORINIT UWB_INT sr100->AP irq_gpio active high */
+		nxp,sr100-irq = <&gpa3 7 0>;
+		/* CHIPENABLE UWB_EN AP->sr100 ce_gpio active high */
+		nxp,sr100-ce = <&gpm21 0 0>;
+		/* GPIO03_WAKEUP UWB_WAKE AP->sr100 wake_gpio active high */
+		nxp,sr100-wakeup = <&gpp2 6 0>;
+		/* RTC_SYNC RTC_SYNC AP->sr100 ri_gpio active high */
+		/* read ready idication */
+		nxp,sr100-ri = <&gpp5 4 0>;
+		nxp,vdd-rf = "VDD_UWB_RF_1P8";
+		nxp,vdd = "VDD_UWB_1P8";
+		controller-data {
+			samsung,spi-feedback-delay = <0>;
+			samsung,spi-chip-select-mode = <0>;
+		};
+	};
+};

@@ -1,0 +1,20 @@
+/*
+ * SAMSUNG EXYNOS9830 input device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+#include "exynos9830-hubble_input_common.dtsi"
+
+&hsi2c_15 {
+	touchscreen@48 {
+		sec,firmware_name = "tsp_sec/y79a_y2.bin";
+		sec,tclm_level = <2>;
+		sec,afe_base = <0x0117>;
+	};
+};

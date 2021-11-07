@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&pinctrl_0 {
+	btp_ipc: btp-ipc {
+		samsung,pins = "gpa1-3";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <3>;
+		samsung,pin-drv = <3>;
+	};
+	btp_wuhb: btp-wuhb {
+		samsung,pins = "gpa1-1";
+		samsung,pin-function = <0xf>;
+		samsung,pin-pud = <1>;
+		samsung,pin-drv = <3>;
+	};
+};
+
+/ {
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+			qbt2000 {
+				compatible = "qcom,qbt2000";
+				qcom,ipc-gpio = <&gpa1 3 0>;
+				qcom,wuhb-gpio = <&gpa1 1 0>;
+				qcom,btp-regulator = "VDD_BTP_1P8";
+				qcom,position = "32.18,0.00,9.00,4.00,14.80,14.80,13.00,13.00,5.00";
+				qcom,modelinfo = "N98X";
+				pinctrl-names = "default", "pins_poweron", "pins_poweroff";
+				pinctrl-0 = <&btp_ipc &btp_wuhb>;
+				pinctrl-1 = <&spi4_bus &spi4_fp_cs_func_high>;
+				pinctrl-2 = <&spi4_fp_inactive>;
+			};
+		};
+	};
+};
+
+
+&spi_4 {
+	status = "okay";
+
+	dma-mode;
+	dmas = <&pdma0 9 &pdma0 8>;
+	dma-names = "tx", "rx";
+
+	qbtspi@0 {
+		compatible = "qcom,qbtspi";
+		reg = <0>;
+		spi-max-frequency = <25000000>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+		controller-data {
+			samsung,spi-feedback-delay = <0>;
+			samsung,spi-chip-select-mode = <0>;
+		};
+	};
+};

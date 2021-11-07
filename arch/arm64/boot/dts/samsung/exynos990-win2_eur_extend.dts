@@ -1,0 +1,31 @@
+/*
+ * SAMSUNG EXYNOS990 board device tree source
+ *
+ * Copyright (c) 2019 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "samsung,WIN2 EUR OPEN 00", "samsung,EXYNOS990";
+	dtbo-hw_rev = <0>;
+   	dtbo-hw_rev_end = <255>;
+	edtbo-rev = <0>;
+
+	fragment@model {
+		target-path = "/";
+		__overlay__ {
+			#address-cells = <2>;
+			#size-cells = <1>;
+
+			model = "Samsung WIN2 EUR OPEN 00 Extend based on EXYNOS990";
+
+		}; /* end of __overlay__ */
+	}; /* end of fragment */
+}; /* end of root */
