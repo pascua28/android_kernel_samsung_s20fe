@@ -1478,7 +1478,7 @@ static struct input_handler evdev_handler = {
 
 static int __init evdev_init(void)
 {
-#ifdef CONFIG_SEC_INPUT_BOOSTER
+#if 0
 	input_booster_init();
 #endif
 	return input_register_handler(&evdev_handler);
