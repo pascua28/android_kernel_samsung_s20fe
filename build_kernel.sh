@@ -6,7 +6,7 @@ export PLATFORM_VERSION=11
 export ANDROID_MAJOR_VERSION=r
 
 BUILD_CROSS_COMPILE=/home/pascua14/gcc-7.4.1/bin/aarch64-linux-gnu-
-KERNEL_LLVM_BIN=/home/pascua14/clang/bin/clang
+KERNEL_LLVM_BIN=/home/pascua14/clang-10/bin/clang
 CLANG_TRIPLE=aarch64-linux-gnu-
 
 make O=out ARCH=arm64 CC=$KERNEL_LLVM_BIN exynos9830-r8slte_defconfig
