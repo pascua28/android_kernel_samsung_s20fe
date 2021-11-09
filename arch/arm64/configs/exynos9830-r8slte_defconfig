@@ -4,7 +4,7 @@
 #
 
 #
-# Compiler: Android (5271481 based on r349610) clang version 8.0.8 (https://android.googlesource.com/toolchain/clang 4dba9ad555eabb40b39dc53c12d09423e9faea7b) (https://android.googlesource.com/toolchain/llvm ab552995647d484a712bf15f77e6c6f4e8ac532b) (based on LLVM 8.0.8svn)
+# Compiler: Android (dev based on r349610) clang version 8.0.8 (https://android.googlesource.com/toolchain/clang 4dba9ad555eabb40b39dc53c12d09423e9faea7b) (https://android.googlesource.com/toolchain/llvm ab552995647d484a712bf15f77e6c6f4e8ac532b) (based on LLVM 8.0.8svn)
 #
 CONFIG_GCC_VERSION=0
 CONFIG_CC_IS_CLANG=y
