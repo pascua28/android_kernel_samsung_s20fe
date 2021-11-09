@@ -31,7 +31,6 @@
 #include <linux/suspend.h>
 #include <linux/sched/clock.h>
 #include <linux/shm_ipc.h>
-#include <linux/modem_notifier.h>
 
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -1696,6 +1695,39 @@ int abox_set_profiling(int en)
 }
 EXPORT_SYMBOL(abox_set_profiling);
 
+static void abox_restore_vss_state(struct device *dev, struct abox_data *data)
+{
+	ABOX_IPC_MSG msg;
+	struct IPC_SYSTEM_MSG *system_msg = &msg.msg.system;
+
+	dev_info(dev, "%s(%d)\n", __func__, data->vss_state);
+
+	msg.ipcid = IPC_SYSTEM;
+	switch (data->vss_state) {
+	case MODEM_EVENT_RESET:
+		system_msg->msgtype = ABOX_RESET_VSS;
+		break;
+	case MODEM_EVENT_EXIT:
+		system_msg->msgtype = ABOX_STOP_VSS;
+		break;
+	case MODEM_EVENT_ONLINE:
+		system_msg->msgtype = ABOX_START_VSS;
+		break;
+	case MODEM_EVENT_OFFLINE:
+		system_msg->msgtype = ABOX_OFFLINE_VSS;
+		break;
+	case MODEM_EVENT_WATCHDOG:
+		system_msg->msgtype = ABOX_WATCHDOG_VSS;
+		break;
+	default:
+		system_msg->msgtype = 0;
+		break;
+	}
+
+	if (system_msg->msgtype)
+		abox_request_ipc(dev, msg.ipcid, &msg, sizeof(msg), 0, 0);
+}
+
 static void abox_restore_data(struct device *dev)
 {
 	struct abox_data *data = dev_get_drvdata(dev);
@@ -1706,6 +1738,7 @@ static void abox_restore_data(struct device *dev)
 	abox_tplg_restore(dev);
 	abox_cmpnt_restore(dev);
 	abox_effect_restore();
+	abox_restore_vss_state(dev, data);
 	data->restored = true;
 	wake_up_all(&data->wait_queue);
 }
@@ -2917,6 +2950,9 @@ static int abox_modem_notifier(struct notifier_block *nb,
 	ABOX_IPC_MSG msg;
 	struct IPC_SYSTEM_MSG *system_msg = &msg.msg.system;
 
+	data->vss_state = action;
+	dev_info(dev, "%s: set vss_state %d\n", __func__, data->vss_state);
+
 	if (!abox_is_on())
 		return NOTIFY_DONE;
 
@@ -2934,6 +2970,9 @@ static int abox_modem_notifier(struct notifier_block *nb,
 		break;
 	case MODEM_EVENT_ONLINE:
 		system_msg->msgtype = ABOX_START_VSS;
+		break;
+	case MODEM_EVENT_OFFLINE:
+		system_msg->msgtype = ABOX_OFFLINE_VSS;
 		break;
 	case MODEM_EVENT_WATCHDOG:
 		system_msg->msgtype = ABOX_WATCHDOG_VSS;
