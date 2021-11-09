@@ -4,12 +4,11 @@
 #
 
 #
-# Compiler: Android (6364210 based on r377782d) clang version 10.0.6 (https://android.googlesource.com/toolchain/llvm-project 0cb1afdb060d6619a9837ab6866cf4adf2336416)
+# Compiler: Android (5271481 based on r349610) clang version 8.0.8 (https://android.googlesource.com/toolchain/clang 4dba9ad555eabb40b39dc53c12d09423e9faea7b) (https://android.googlesource.com/toolchain/llvm ab552995647d484a712bf15f77e6c6f4e8ac532b) (based on LLVM 8.0.8svn)
 #
 CONFIG_GCC_VERSION=0
 CONFIG_CC_IS_CLANG=y
-CONFIG_CLANG_VERSION=100006
-CONFIG_CC_HAS_ASM_GOTO=y
+CONFIG_CLANG_VERSION=80008
 CONFIG_IRQ_WORK=y
 CONFIG_BUILDTIME_EXTABLE_SORT=y
 CONFIG_THREAD_INFO_IN_TASK=y
@@ -587,7 +586,6 @@ CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
 # General architecture-dependent options
 #
 CONFIG_KPROBES=y
-# CONFIG_JUMP_LABEL is not set
 CONFIG_UPROBES=y
 CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS=y
 CONFIG_KRETPROBES=y
