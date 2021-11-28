@@ -542,7 +542,7 @@ int schedtune_task_boost(struct task_struct *p)
 	struct schedtune *st;
 	int task_boost;
 
-	if (!unlikely(schedtune_initialized) || is_battery_saver_on())
+	if (!unlikely(schedtune_initialized))
 		return 0;
 
 	/* Get task boost value */
@@ -596,9 +596,6 @@ static s64
 boost_read(struct cgroup_subsys_state *css, struct cftype *cft)
 {
 	struct schedtune *st = css_st(css);
-
-	if (is_battery_saver_on())
-		return 0;
 
 	return st->boost;
 }
@@ -693,9 +690,6 @@ boost_write(struct cgroup_subsys_state *css, struct cftype *cft,
 	    s64 boost)
 {
 	struct schedtune *st = css_st(css);
-
-	   if (is_battery_saver_on())
-		   return 0;
 
 	if (boost < 0 || boost > 100)
 		return -EINVAL;
