@@ -16,6 +16,8 @@
 #include <linux/mutex.h>
 #include <linux/list.h>
 #include <linux/notifier.h>
+#include <soc/samsung/bts.h>
+#define NPU_QOS_DEFAULT_VALUE   (INT_MAX)
 
 struct npu_qos_freq_lock {
 	u32	npu_freq_maxlock;
@@ -45,6 +47,9 @@ struct npu_qos_setting {
 	s32		req_mif_freq;
 	s32		req_int_freq;
 
+	s32		req_mo_scen;
+	u32		req_cpu_aff;
+
 	u32		dsp_type;
 	u32		dsp_max_freq;
 	u32		npu_max_freq;
@@ -58,6 +63,7 @@ struct npu_qos_setting {
 struct npu_session_qos_req {
 	s32		sessionUID;
 	s32		req_freq;
+	s32		req_mo_scen;
 	__u32		eCategory;
 	struct list_head list;
 };
@@ -65,8 +71,8 @@ struct npu_session_qos_req {
 struct npu_system;
 int npu_qos_probe(struct npu_system *system);
 int npu_qos_release(struct npu_system *system);
-int npu_qos_start(struct npu_system *system);
-int npu_qos_stop(struct npu_system *system);
+int npu_qos_open(struct npu_system *system);
+int npu_qos_close(struct npu_system *system);
 npu_s_param_ret npu_qos_param_handler(struct npu_session *sess,
 	struct vs4l_param *param, int *retval);
 

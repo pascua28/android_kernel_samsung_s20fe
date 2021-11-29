@@ -643,6 +643,9 @@ static int usb_audio_probe(struct usb_interface *intf,
 			exynos_usb_audio_desc(dev);
 			exynos_usb_audio_map_buf(dev);
 			usb_audio->is_audio = 1;
+		} else {
+			pr_err("USB audio is can not support second device!!\n");
+			return -EPERM;
 		}
 	}
 #ifdef CONFIG_USB_DEBUG_DETAILED_LOG

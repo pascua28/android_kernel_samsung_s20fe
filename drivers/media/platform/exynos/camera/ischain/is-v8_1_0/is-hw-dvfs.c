@@ -1143,6 +1143,7 @@ DECLARE_DVFS_CHK_FUNC(IS_SN_REAR_CAMCORDING_FHD)
 			(mask == ISS_SUB_SCENARIO_VIDEO_WDR_AUTO));
 
 	if ((position == SENSOR_POSITION_REAR) &&
+                        (streaming_cnt == 1) &&
 			(fps <= 30) &&
 			setfile_flag)
 		return 1;

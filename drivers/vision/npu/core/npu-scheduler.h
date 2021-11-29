@@ -301,5 +301,7 @@ struct npu_scheduler_info *npu_scheduler_get_info(void);
 int npu_scheduler_boost_on(struct npu_scheduler_info *info);
 int npu_scheduler_boost_off(struct npu_scheduler_info *info);
 int npu_scheduler_boost_off_timeout(struct npu_scheduler_info *info, s64 timeout);
+int npu_scheduler_enable(struct npu_scheduler_info *info);
+int npu_scheduler_disable(struct npu_scheduler_info *info);
 
 #endif

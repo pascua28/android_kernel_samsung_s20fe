@@ -1470,8 +1470,11 @@ int decon_exit_hiber(struct decon_device *decon)
 	 * After hibernation exit, If panel is partial size, DECON and DSIM
 	 * are also set as same partial size.
 	 */
-	if (!is_full(&decon->win_up.prev_up_region, decon->lcd_info))
+	if (!is_full(&decon->win_up.prev_up_region, decon->lcd_info)) {
+		if (is_decon_rect_empty(&decon->win_up.prev_up_region))
+			decon_warn("%s: prev_up_region is empty\n", __func__);
 		dpu_set_win_update_partial_size(decon, &decon->win_up.prev_up_region);
+	}
 
 	if (!decon->id && !decon->eint_status) {
 		struct irq_desc *desc = irq_to_desc(decon->res.irq);

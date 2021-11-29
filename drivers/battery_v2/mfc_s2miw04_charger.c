@@ -2085,10 +2085,6 @@ static void mfc_wpc_fw_update_work(struct work_struct *work)
 		charger->pdata->otp_firmware_result = MFC_FWUP_ERR_RUNNING;
 		is_changed = true;
 
-		disable_irq(charger->pdata->irq_wpc_int);
-		disable_irq(charger->pdata->irq_wpc_det);
-		if (charger->pdata->irq_wpc_pdrc)
-			disable_irq(charger->pdata->irq_wpc_pdrc);
 		dev_err(&charger->client->dev, "%s, request_firmware\n", __func__);
 
 		ret = request_firmware(&charger->firm_data_bin, MFC_FLASH_FW_HEX_LSI_PATH,
@@ -2098,6 +2094,11 @@ static void mfc_wpc_fw_update_work(struct work_struct *work)
 			charger->pdata->otp_firmware_result = MFC_FWUP_ERR_REQUEST_FW_BIN;
 			goto fw_err;
 		}
+		disable_irq(charger->pdata->irq_wpc_int);
+		disable_irq(charger->pdata->irq_wpc_det);
+		if (charger->pdata->irq_wpc_pdrc)
+			disable_irq(charger->pdata->irq_wpc_pdrc);
+
 		wake_lock(&charger->wpc_update_lock);
 #if defined(CONFIG_WIRELESS_IC_PARAM)
 		mfc_set_wireless_param(MFC_CHIP_ID_S2MIW04, 0);
@@ -3488,6 +3489,7 @@ static void mfc_wpc_det_work(struct work_struct *work)
 		charger->wc_ldo_status = MFC_LDO_ON;
 		charger->tx_id_done = false;
 		charger->req_tx_id = false;
+		charger->afc_tx_done = false;
 		charger->is_abnormal_pad = false;
 #if defined(CONFIG_CHECK_UNAUTH_PAD)
 		charger->req_afc_tx = false;
@@ -3693,8 +3695,18 @@ static void mfc_wpc_isr_work(struct work_struct *work)
 			value.intval = charger->is_abnormal_pad;
 			psy_do_property("wireless", set,
 				POWER_SUPPLY_PROP_WIRELESS_ABNORMAL_PAD, value);
-			if (charger->req_tx_id && charger->tx_id_cnt < TX_ID_CHECK_CNT)
-				mfc_send_command(charger, MFC_AFC_CONF_5V_TX);
+			if (charger->req_tx_id && charger->afc_tx_done) {
+				if (delayed_work_pending(&charger->wpc_afc_vout_work)) {
+					wake_unlock(&charger->wpc_afc_vout_lock);
+					cancel_delayed_work(&charger->wpc_afc_vout_work);
+				}
+				mfc_send_command(charger, MFC_AFC_CONF_5V);
+				charger->pdata->cable_type = value.intval = SEC_WIRELESS_PAD_WPC;
+				psy_do_property("wireless", set,
+					POWER_SUPPLY_PROP_ONLINE, value);
+				charger->pad_vout = PAD_VOUT_5V;
+				charger->afc_tx_done = false;
+			}
 			wake_unlock(&charger->wpc_rx_wake_lock);
 			return;
 		}
@@ -3706,8 +3718,18 @@ static void mfc_wpc_isr_work(struct work_struct *work)
 			value.intval = charger->is_abnormal_pad;
 			psy_do_property("wireless", set,
 				POWER_SUPPLY_PROP_WIRELESS_ABNORMAL_PAD, value);
-			if (charger->tx_id_cnt < TX_ID_CHECK_CNT)
-				mfc_send_command(charger, MFC_AFC_CONF_5V_TX);
+			if (charger->afc_tx_done) {
+				if (delayed_work_pending(&charger->wpc_afc_vout_work)) {
+					wake_unlock(&charger->wpc_afc_vout_lock);
+					cancel_delayed_work(&charger->wpc_afc_vout_work);
+				}
+				mfc_send_command(charger, MFC_AFC_CONF_5V);
+				charger->pdata->cable_type = value.intval = SEC_WIRELESS_PAD_WPC;
+				psy_do_property("wireless", set,
+					POWER_SUPPLY_PROP_ONLINE, value);
+				charger->pad_vout = PAD_VOUT_5V;
+				charger->afc_tx_done = false;
+			}
 			wake_unlock(&charger->wpc_rx_wake_lock);
 			return;
 		}
@@ -3719,6 +3741,7 @@ static void mfc_wpc_isr_work(struct work_struct *work)
 			break;
 		case TX_AFC_SET_10V:
 			pr_info("%s data = 0x%x, might be 10V irq\n", __func__, val_data);
+			charger->afc_tx_done = true;
 			if (!gpio_get_value(charger->pdata->wpc_det)) {
 				pr_err("%s Wireless charging is paused during set high voltage.\n", __func__);
 				wake_unlock(&charger->wpc_rx_wake_lock);
@@ -4025,7 +4048,7 @@ static void mfc_wpc_tx_id_work(struct work_struct *work)
 
 	pr_info("%s\n", __func__);
 
-	if (!charger->tx_id && (!charger->is_abnormal_pad || charger->tx_id_cnt < TX_ID_CHECK_CNT)) {
+	if (!charger->tx_id && !charger->is_abnormal_pad) {
 		if (charger->tx_id_cnt < 10) {
 			mfc_send_command(charger, MFC_REQUEST_TX_ID);
 			charger->req_tx_id = true;
@@ -4835,6 +4858,7 @@ static int mfc_s2miw04_charger_probe(
 	charger->wpc_en_flag = (WPC_EN_SYSFS | WPC_EN_CHARGING | WPC_EN_CCIC);
 	charger->req_tx_id = false;
 	charger->is_abnormal_pad = false;
+	charger->afc_tx_done = false;
 #if defined(CONFIG_CHECK_UNAUTH_PAD)
 	charger->req_afc_tx = false;
 	charger->ping_freq = 0;

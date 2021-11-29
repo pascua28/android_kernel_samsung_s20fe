@@ -1100,6 +1100,15 @@ retry:
 		exynos_elbi_write(exynos_pcie, 0x1, PCIE_L1_BUG_FIX_ENABLE);
 	}
 
+	{
+		u32 val_tmp;
+
+		val_tmp = exynos_sysreg_read(exynos_pcie,
+				PCIE_WIFI0_PCIE_PHY_CONTROL);
+		dev_info(dev, "%s: lane0 value = 0x%x\n",
+				__func__, val_tmp);
+	}
+
 	/* setup root complex */
 	dw_pcie_setup_rc(pp);
 	exynos_pcie_setup_rc(pp);

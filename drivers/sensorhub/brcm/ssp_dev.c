@@ -741,9 +741,9 @@ void ssp_motor_work_func(struct work_struct *work)
 #ifdef CONFIG_VIB_NOTIFIER
 static int vib_notifier_callback(struct notifier_block *self, unsigned long event, void *data){
 	ssp_data_info->motor_state = 1;
-
-	queue_work(ssp_data_info->ssp_motor_wq,
-			&ssp_data_info->work_ssp_motor);
+	
+	if (ssp_data_info->ssp_motor_wq != NULL)
+		queue_work(ssp_data_info->ssp_motor_wq, &ssp_data_info->work_ssp_motor);
 
 	pr_info("[SSP] %s : Motor state %d\n", __func__, ssp_data_info->motor_state );
 

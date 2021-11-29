@@ -3818,6 +3818,16 @@ add_new_regs:
 	if (num_of_window)
 		fd_install(win_data->retire_fence, sync_ifile->file);
 
+	if (decon->mres_enabled &&
+			(win_data->config[DECON_WIN_UPDATE_IDX].state == DECON_WIN_STATE_MRESOL) &&
+			((win_data->config[DECON_WIN_UPDATE_IDX].dst.f_w != decon->lcd_info->xres) ||
+			 (win_data->config[DECON_WIN_UPDATE_IDX].dst.f_h != decon->lcd_info->yres))) {
+		decon_dbg("MRESOL: flush up.worker(%d frames) +\n",
+				atomic_read(&decon->up.remaining_frame));
+		kthread_flush_worker(&decon->up.worker);
+		decon_dbg("MRESOL: flush up.worker -\n");
+	}
+
 	mutex_unlock(&decon->lock);
 	decon_systrace(decon, 'C', "decon_win_config", 0);
 

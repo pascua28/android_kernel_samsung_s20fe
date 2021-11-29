@@ -40,8 +40,8 @@
 #include <linux/workqueue.h>
 #include <linux/power_supply.h>
 
-#ifdef CONFIG_SAMSUNG_TUI
-#include "stui_inf.h"
+#if defined(CONFIG_SAMSUNG_TUI)
+#include <linux/input/stui_inf.h>
 #endif
 
 #ifdef CONFIG_INPUT_SEC_SECURE_TOUCH

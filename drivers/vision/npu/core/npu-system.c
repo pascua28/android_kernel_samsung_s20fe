@@ -332,6 +332,12 @@ int npu_system_open(struct npu_system *system)
 		goto p_err;
 	}
 
+	ret = npu_qos_open(system);
+	if (ret) {
+		npu_err("fail(%d) in npu_qos_open\n", ret);
+		goto p_err;
+	}
+
 	/* Clear resume steps */
 	system->resume_steps = 0;
 p_err:
@@ -359,6 +365,10 @@ int npu_system_close(struct npu_system *system)
 	ret = npu_scheduler_close(device);
 	if (ret)
 		npu_err("fail(%d) in npu_scheduler_close\n", ret);
+
+	ret = npu_qos_close(system);
+	if (ret)
+		npu_err("fail(%d) in npu_qos_close\n", ret);
 
 	return ret;
 }
@@ -534,12 +544,6 @@ int npu_system_start(struct npu_system *system)
 		goto p_err;
 	}
 
-	ret = npu_qos_start(system);
-	if (ret) {
-		npu_err("fail(%d) in npu_qos_start\n", ret);
-		goto p_err;
-	}
-
 p_err:
 
 	return ret;
@@ -568,12 +572,6 @@ int npu_system_stop(struct npu_system *system)
 	ret = npu_scheduler_stop(device);
 	if (ret) {
 		npu_err("fail(%d) in npu_scheduler_stop\n", ret);
-		goto p_err;
-	}
-
-	ret = npu_qos_stop(system);
-	if (ret) {
-		npu_err("fail(%d) in npu_qos_stop\n", ret);
 		goto p_err;
 	}
 

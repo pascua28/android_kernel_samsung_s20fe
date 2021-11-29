@@ -543,8 +543,6 @@ void mhi_fw_load_handler(struct mhi_controller *mhi_cntrl)
 	const char *fw_name;
 	const struct firmware *firmware;
 	struct image_info *image_info;
-	void *buf;
-	dma_addr_t dma_addr;
 	size_t size;
 
 	if (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
@@ -579,17 +577,19 @@ void mhi_fw_load_handler(struct mhi_controller *mhi_cntrl)
 	if (size > firmware->size)
 		size = firmware->size;
 
-	buf = mhi_alloc_coherent(mhi_cntrl, size, &dma_addr, GFP_KERNEL);
-	if (!buf) {
-		MHI_ERR("Could not allocate memory for image\n");
-		release_firmware(firmware);
-		return;
-	}
+	if (!mhi_cntrl->sbl_buf) {
+		mhi_cntrl->sbl_buf = mhi_alloc_coherent(mhi_cntrl, size,
+			&mhi_cntrl->sbl_dma_addr, GFP_KERNEL);
+		if (!mhi_cntrl->sbl_buf) {
+			MHI_ERR("Could not allocate memory for image\n");
+			release_firmware(firmware);
+			return;
+		}
+ 	}
 
 	/* load sbl image */
-	memcpy(buf, firmware->data, size);
-	ret = mhi_fw_load_sbl(mhi_cntrl, dma_addr, size);
-	mhi_free_coherent(mhi_cntrl, size, buf, dma_addr);
+	memcpy(mhi_cntrl->sbl_buf, firmware->data, size);
+	ret = mhi_fw_load_sbl(mhi_cntrl, mhi_cntrl->sbl_dma_addr, size);
 
 	if (!mhi_cntrl->fbc_download || ret || mhi_cntrl->ee == MHI_EE_EDL)
 		release_firmware(firmware);

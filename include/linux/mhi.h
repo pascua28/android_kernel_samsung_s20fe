@@ -354,6 +354,8 @@ struct reg_write_info {
  * @img_pre_alloc: allocate rddm and fbc image buffers one time
  * @fbc_image: Points to firmware image buffer
  * @rddm_image: Points to RAM dump buffer
+ * @sbl_buf: Pre-allocated sbl image buffer
+ * @sbl_dma_addr: Pre-allocated sbl image buffer dma addr
  * @max_chan: Maximum number of channels controller support
  * @mhi_chan: Points to channel configuration table
  * @lpm_chans: List of channels that require LPM notifications
@@ -414,6 +416,8 @@ struct mhi_controller {
 	/* fw images */
 	const char *fw_image;
 	const char *edl_image;
+ 	void *sbl_buf;
+	dma_addr_t sbl_dma_addr;
 
 	/* mhi host manages downloading entire fbc images */
 	bool fbc_download;

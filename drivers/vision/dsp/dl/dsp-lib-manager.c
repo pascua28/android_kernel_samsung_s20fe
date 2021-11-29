@@ -403,6 +403,27 @@ static int __dsp_lib_manager_load_bss_sec(struct dsp_lib *lib,
 		unsigned long end = (unsigned long)(dest + mem_hdr->sh_size);
 		unsigned int *addr;
 
+		if (sec.offset >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
+			return -1;
+		}
+
+		if (lib->link_info->sec[ndx] >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
+			return -1;
+		}
+
+		if (mem_hdr->sh_size >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
+			return -1;
+		}
+
 		if (sec.offset + lib->link_info->sec[ndx] + mem_hdr->sh_size >
 				lib->dl_out_data_size) {
 			DL_ERROR("invalid dest range(%u/%lu/%u/%zu)\n",
@@ -450,6 +471,27 @@ static int __dsp_lib_manager_load_sec(struct dsp_lib *lib,
 			DL_ERROR("invalid data range(%u/%u)\n",
 					mem_hdr->sh_offset,
 					mem_hdr->sh_size);
+			return -1;
+		}
+
+		if (sec.offset >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
+			return -1;
+		}
+
+		if (lib->link_info->sec[ndx] >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
+			return -1;
+		}
+
+		if (mem_hdr->sh_size >
+				sec.offset + lib->link_info->sec[ndx] +
+				mem_hdr->sh_size) {
+			DL_ERROR("Overflow happened.\n");
 			return -1;
 		}
 

@@ -184,6 +184,7 @@ static uint8_t DP_Pin_Assignment_Data[7] = {
 	DP_PIN_ASSIGNMENT_C,
 	DP_PIN_ASSIGNMENT_D,
 	DP_PIN_ASSIGNMENT_E,
+	DP_PIN_ASSIGNMENT_F,
 };
 
 bool max77705_check_hmd_dev(struct max77705_usbc_platform_data *usbpd_data)

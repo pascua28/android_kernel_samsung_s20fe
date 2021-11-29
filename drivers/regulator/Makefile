@@ -140,5 +140,4 @@ obj-$(CONFIG_REGULATOR_WM8994) += wm8994-regulator.o
 ccflags-$(CONFIG_REGULATOR_DEBUG) += -DDEBUG
 ccflags-y := -Wformat
 
-obj-$(CONFIG_KUNIT)			+= kunit_test/
 GCOV_PROFILE_s2dos05.o		:=y

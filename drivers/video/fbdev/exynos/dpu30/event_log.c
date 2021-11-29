@@ -339,6 +339,10 @@ void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs)
 	log->time = ktime_get();
 	log->type = DPU_EVT_UPDATE_HANDLER;
 
+#if defined(CONFIG_EXYNOS_COMMON_PANEL)
+	memcpy(&log->data.reg.up_region, &regs->up_region,
+			sizeof(struct decon_rect));
+#endif
 	for (win = 0; win < decon->dt.max_win; win++) {
 		if (regs->win_regs[win].wincon & WIN_EN_F(win)) {
 			memcpy(&log->data.reg.win_regs[win], &regs->win_regs[win],

@@ -29,6 +29,46 @@ struct npu_scheduler_info *npu_scheduler_get_info(void)
 	}
 }
 
+int npu_scheduler_enable(struct npu_scheduler_info *info)
+{
+	if (!info) {
+		npu_err("npu_scheduler_info is NULL!\n");
+		return -EINVAL;
+	}
+
+	info->enable = 1;
+
+	/* re-schedule work */
+	if (info->activated) {
+		cancel_delayed_work_sync(&info->sched_work);
+		queue_delayed_work(info->sched_wq, &info->sched_work,
+				msecs_to_jiffies(0));
+	}
+
+	npu_info("done\n");
+	return 1;
+}
+
+int npu_scheduler_disable(struct npu_scheduler_info *info)
+{
+	struct npu_scheduler_dvfs_info *d;
+
+	if (!info) {
+		npu_err("npu_scheduler_info is NULL!\n");
+		return -EINVAL;
+	}
+
+	info->enable = 0;
+	mutex_lock(&info->exec_lock);
+	list_for_each_entry(d, &info->ip_list, ip_list) {
+		npu_pm_qos_update_request(d, &d->qos_req_min, d->min_freq);
+	}
+	mutex_unlock(&info->exec_lock);
+
+	npu_info("done\n");
+	return 1;
+}
+
 void npu_scheduler_activate_peripheral_dvfs(unsigned long freq)
 {
 	bool dvfs_active = false;
@@ -794,6 +834,11 @@ static void npu_scheduler_set_mode_freq(struct npu_scheduler_info *info, int uid
 	struct npu_scheduler_dvfs_info *d;
 	s32	freq = 0;
 
+	if (!info->enable) {
+		npu_dbg("scheduler disabled\n");
+		return;
+	}
+
 	if (list_empty(&info->ip_list)) {
 		npu_err("no device for scheduler\n");
 		return;
@@ -953,8 +998,10 @@ static void __npu_scheduler_work(struct npu_scheduler_info *info)
 	int is_last_idle = 0;
 	u32 load, load_idle;
 
-	if (!info->enable)
+	if (!info->enable) {
 		npu_dbg("scheduler disabled\n");
+		return;
+	}
 
 	now = npu_get_time_us();
 	info->time_diff = now - info->time_stamp;

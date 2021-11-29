@@ -2443,7 +2443,10 @@ static int dwc3_gadget_start(struct usb_gadget *g,
 	unsigned long		flags;
 	int			ret = 0;
 	int			irq;
+	struct dwc3_otg *dotg = dwc->dotg;
+	struct otg_fsm	*fsm = &dotg->fsm;
 
+	mutex_lock(&fsm->lock);
 	irq = dwc->irq_gadget;
 #if IS_ENABLED(DWC3_GADGET_IRQ_ORG)
 	ret = request_threaded_irq(irq, dwc3_interrupt, dwc3_thread_interrupt,
@@ -2477,6 +2480,7 @@ static int dwc3_gadget_start(struct usb_gadget *g,
 	 */
 
 	spin_unlock_irqrestore(&dwc->lock, flags);
+	mutex_unlock(&fsm->lock);
 
 #ifdef CONFIG_ARGOS
 	if (!zalloc_cpumask_var(&affinity_cpu_mask, GFP_KERNEL))
@@ -2495,6 +2499,7 @@ err1:
 	free_irq(irq, dwc);
 
 err0:
+	mutex_unlock(&fsm->lock);
 	return ret;
 }
 
@@ -2509,7 +2514,10 @@ static int dwc3_gadget_stop(struct usb_gadget *g)
 {
 	struct dwc3		*dwc = gadget_to_dwc(g);
 	unsigned long		flags;
+	struct dwc3_otg *dotg = dwc->dotg;
+	struct otg_fsm  *fsm = &dotg->fsm;
 
+	mutex_lock(&fsm->lock);
 	spin_lock_irqsave(&dwc->lock, flags);
 
 	if (pm_runtime_suspended(dwc->dev))
@@ -2520,6 +2528,7 @@ static int dwc3_gadget_stop(struct usb_gadget *g)
 out:
 	dwc->gadget_driver	= NULL;
 	spin_unlock_irqrestore(&dwc->lock, flags);
+	mutex_unlock(&fsm->lock);
 
 	free_irq(dwc->irq_gadget, dwc->ev_buf);
 

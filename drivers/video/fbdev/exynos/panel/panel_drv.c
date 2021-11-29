@@ -4261,8 +4261,8 @@ static int panel_dpui_notifier_callback(struct notifier_block *self,
 			"%d", panel->work[PANEL_WORK_DIM_FLASH].ret);
 	set_dpui_field(DPUI_KEY_PNGFLS, tbuf, size);
 #endif
-//	inc_dpui_u32_field(DPUI_KEY_UB_CON, panel->panel_data.props.ub_con_cnt);
-//	panel->panel_data.props.ub_con_cnt = 0;
+	inc_dpui_u32_field(DPUI_KEY_UB_CON, panel->panel_data.props.ub_con_cnt);
+	panel->panel_data.props.ub_con_cnt = 0;
 
 	return 0;
 }

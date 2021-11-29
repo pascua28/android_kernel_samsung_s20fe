@@ -238,5 +238,8 @@ endif
 #TZIC
 obj-y  += security/samsung/tzic/
 
+# KUnit
+obj-y				+= kunit/
+
 # SPU signature verify
 obj-$(CONFIG_SPU_VERIFY) += spu_verify/

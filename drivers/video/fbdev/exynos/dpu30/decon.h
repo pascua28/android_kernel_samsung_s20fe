@@ -790,6 +790,9 @@ struct decon_update_reg_data {
 	struct decon_window_regs 	win_regs[MAX_DECON_WIN];
 	struct decon_win_config 	win_config[MAX_DECON_WIN + 2];
 	struct decon_win_rect 		win;
+#if defined(CONFIG_EXYNOS_COMMON_PANEL)
+	struct decon_rect up_region;
+#endif
 };
 
 /* Related with MIPI COMMAND read/write */
@@ -2053,6 +2056,7 @@ void dpu_dump_afbc_info(void);
 void decon_set_protected_content(struct decon_device *decon,
 		struct decon_reg_data *regs);
 #endif
+bool is_decon_rect_empty(struct decon_rect *r);
 
 int decon_runtime_suspend(struct device *dev);
 int decon_runtime_resume(struct device *dev);

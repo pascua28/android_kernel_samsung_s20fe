@@ -593,9 +593,11 @@ struct sec_battery_info {
 	unsigned int tx_ocp_cnt;
 	struct delayed_work ext_event_work;
 	struct delayed_work misc_event_work;
+	struct delayed_work wpc_tx_en_work;
 	struct wake_lock ext_event_wake_lock;
 	struct wake_lock misc_event_wake_lock;
 	struct wake_lock tx_event_wake_lock;
+	struct wake_lock wpc_tx_en_wake_lock;
 	struct mutex batt_handlelock;
 	struct mutex current_eventlock;
 	struct mutex typec_notylock;

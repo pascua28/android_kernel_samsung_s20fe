@@ -854,6 +854,12 @@ static int dhdpcie_set_suspend_resume(dhd_bus_t *bus, bool state)
 
 	ASSERT(bus && !bus->dhd->dongle_reset);
 
+#ifdef DHD_PERIODIC_CNTRS
+	if (state) {
+		dhd_dbg_periodic_cntrs_stop(bus->dhd);
+	}
+#endif /* DHD_PERIODIC_CNTRS */
+
 #ifdef DHD_PCIE_RUNTIMEPM
 	/* if wakelock is held during suspend, return failed */
 	if (state == TRUE && dhd_os_check_wakelock_all(bus->dhd)) {
@@ -894,6 +900,11 @@ static int dhdpcie_set_suspend_resume(dhd_bus_t *bus, bool state)
 #ifdef DHD_PCIE_RUNTIMEPM
 	mutex_unlock(&bus->pm_lock);
 #endif /* DHD_PCIE_RUNTIMEPM */
+#ifdef DHD_PERIODIC_CNTRS
+	if (!state) {
+		dhd_dbg_periodic_cntrs_start(bus->dhd);
+	}
+#endif /* DHD_PERIODIC_CNTRS */
 
 	return ret;
 }
@@ -2581,6 +2592,9 @@ dhdpcie_bus_request_irq(struct dhd_bus *bus)
 #ifdef BCMPCIE_OOB_HOST_WAKE
 #ifdef CONFIG_BCMDHD_GET_OOB_STATE
 extern int dhd_get_wlan_oob_gpio(void);
+#ifdef PRINT_WAKEUP_GPIO_STATUS
+extern int dhd_get_wlan_oob_gpio_number(void);
+#endif /* PRINT_WAKEUP_GPIO_STATUS */
 #endif /* CONFIG_BCMDHD_GET_OOB_STATE */
 
 int dhdpcie_get_oob_irq_level(void)
@@ -2594,7 +2608,16 @@ int dhdpcie_get_oob_irq_level(void)
 #endif /* CONFIG_BCMDHD_GET_OOB_STATE */
 	return gpio_level;
 }
-
+#ifdef PRINT_WAKEUP_GPIO_STATUS
+int dhdpcie_get_oob_gpio_number(void)
+{
+	int gpio_number = BCME_UNSUPPORTED;
+#ifdef CONFIG_BCMDHD_GET_OOB_STATE
+	gpio_number = dhd_get_wlan_oob_gpio_number();
+#endif /* CONFIG_BCMDHD_GET_OOB_STATE */
+	return gpio_number;
+}
+#endif /* PRINT_WAKEUP_GPIO_STATUS */
 int dhdpcie_get_oob_irq_status(struct dhd_bus *bus)
 {
 	dhdpcie_info_t *pch;

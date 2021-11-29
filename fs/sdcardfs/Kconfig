@@ -15,7 +15,7 @@ config SDCARD_FS_FADV_NOACTIVE
 config SDCARD_FS_SUPPORT_KNOX
 	bool "sdcardfs support for Knox"
 	depends on SDCARD_FS
-	default n
+	default y if $(PLATFORM_VERSION) < 11
 	help
 	  Sdcardfs supports Knox until the platform version 10.
 

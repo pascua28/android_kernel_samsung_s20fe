@@ -10,8 +10,8 @@
  */
 
 #ifdef CONFIG_SND_SOC_SAMSUNG_AUDIO
-#include "kunit/test.h"
-#include "kunit/mock.h"
+#include <kunit/test.h>
+#include <kunit/mock.h>
 #endif
 
 #include <linux/clk.h>

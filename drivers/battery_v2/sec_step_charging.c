@@ -377,6 +377,9 @@ check_dc_step_change:
 				val.intval = battery->pdata->dc_step_chg_val_iout[step] / 2;
 				psy_do_property(battery->pdata->charger_name, set,
 					POWER_SUPPLY_EXT_PROP_DIRECT_CURRENT_MAX, val);
+
+				/* updated charging current */
+				battery->charging_current = battery->pdata->dc_step_chg_val_iout[step];
 			}
 		}
 		battery->step_charging_status = step;

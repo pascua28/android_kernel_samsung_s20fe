@@ -132,6 +132,8 @@ int npu_qos_probe(struct npu_system *system)
 	qos_setting->req_cl0_freq = 0;
 	qos_setting->req_cl1_freq = 0;
 	qos_setting->req_cl2_freq = 0;
+	qos_setting->req_mo_scen = 0;
+	qos_setting->req_cpu_aff = 0;
 	mutex_unlock(&qos_setting->npu_qos_lock);
 
 	qos_lock.npu_freq_maxlock = PM_QOS_NPU_THROUGHPUT_MAX_DEFAULT_VALUE;
@@ -156,7 +158,7 @@ int npu_qos_release(struct npu_system *system)
 	return 0;
 }
 
-int npu_qos_start(struct npu_system *system)
+int npu_qos_open(struct npu_system *system)
 {
 	BUG_ON(!system);
 
@@ -178,7 +180,7 @@ int npu_qos_start(struct npu_system *system)
 	return 0;
 }
 
-int npu_qos_stop(struct npu_system *system)
+int npu_qos_close(struct npu_system *system)
 {
 	struct list_head *pos, *q;
 	struct npu_session_qos_req *qr;
@@ -255,59 +257,137 @@ int __req_param_qos(int uid, __u32 nCategory, struct pm_qos_request *req, s32 ne
 	struct list_head *pos, *q;
 	struct npu_session_qos_req *qr;
 
+	//return 0;
 	//Check that same uid, and category whether already registered.
 	list_for_each_safe(pos, q, &qos_list) {
 		qr = list_entry(pos, struct npu_session_qos_req, list);
 		if ((qr->sessionUID == uid) && (qr->eCategory == nCategory)) {
-			cur_value = qr->req_freq;
-			npu_dbg("[U%u]Change Req Freq. category : %u, from freq : %d to %d\n",
-					uid, nCategory, cur_value, new_value);
-			list_del(pos);
-			qr->sessionUID = uid;
-			qr->req_freq = new_value;
-			qr->eCategory = nCategory;
-			list_add_tail(&qr->list, &qos_list);
-			rec_value = __update_freq_from_showcase(nCategory);
+			switch (nCategory) {
+			case NPU_S_PARAM_QOS_MO_SCEN_PRESET:
+				cur_value = qr->req_mo_scen;
+				npu_dbg("[U%u]Change Req MO scen. category : %u, from mo scen : %d to %d\n",
+						uid, nCategory, cur_value, new_value);
+				list_del(pos);
 
-			if (new_value > rec_value) {
-				pm_qos_update_request(req, new_value);
-				npu_dbg("[U%u]Changed Freq. category : %u, from freq : %d to %d\n",
-					uid, nCategory, cur_value, new_value);
-			} else {
-				pm_qos_update_request(req, rec_value);
-				npu_dbg("[U%u]Recovered Freq. category : %u, from freq : %d to %d\n",
-					uid, nCategory, cur_value, rec_value);
+				qr->sessionUID = uid;
+				qr->req_mo_scen = new_value;
+				qr->eCategory = nCategory;
+				list_add_tail(&qr->list, &qos_list);
+				bts_del_scenario(cur_value);
+				bts_add_scenario(qr->req_mo_scen);
+				return ret;
+			default:
+				cur_value = qr->req_freq;
+				npu_dbg("[U%u]Change Req Freq. category : %u, from freq : %d to %d\n",
+						uid, nCategory, cur_value, new_value);
+				list_del(pos);
+				qr->sessionUID = uid;
+				qr->req_freq = new_value;
+				qr->eCategory = nCategory;
+				list_add_tail(&qr->list, &qos_list);
+
+				rec_value = __update_freq_from_showcase(nCategory);
+
+				if (new_value > rec_value) {
+					pm_qos_update_request(req, new_value);
+					npu_dbg("[U%u]Changed Freq. category : %u, from freq : %d to %d\n",
+							uid, nCategory, cur_value, new_value);
+				} else {
+					pm_qos_update_request(req, rec_value);
+					npu_dbg("[U%u]Recovered Freq. category : %u, from freq : %d to %d\n",
+							uid, nCategory, cur_value, rec_value);
+				}
+				return ret;
 			}
-			return ret;
 		}
 	}
+
 	//No Same uid, and category. Add new item
 	qr = kmalloc(sizeof(struct npu_session_qos_req), GFP_KERNEL);
-	if (!qr) {
-		npu_err("memory alloc fail.\n");
+	if (!qr)
 		return -ENOMEM;
-	}
-	qr->sessionUID = uid;
-	qr->req_freq = new_value;
-	qr->eCategory = nCategory;
-	list_add_tail(&qr->list, &qos_list);
 
-	//If new_value is lager than current value, update the freq
-	cur_value = (s32)pm_qos_read_req_value(req->pm_qos_class, req);
-	npu_dbg("[U%u]New Freq. category : %u freq : %u\n",
-		qr->sessionUID, qr->eCategory, qr->req_freq);
-	if (cur_value < new_value) {
-		npu_dbg("[U%u]Update Freq. category : %u freq : %u\n",
-			qr->sessionUID, qr->eCategory, qr->req_freq);
-		pm_qos_update_request(req, new_value);
+	switch (nCategory) {
+	case NPU_S_PARAM_QOS_MO_SCEN_PRESET:
+		qr->sessionUID = uid;
+		qr->req_mo_scen = new_value;
+		qr->eCategory = nCategory;
+		list_add_tail(&qr->list, &qos_list);
+		bts_add_scenario(qr->req_mo_scen);
+		return ret;
+	default:
+		qr->sessionUID = uid;
+		qr->req_freq = new_value;
+		qr->eCategory = nCategory;
+		list_add_tail(&qr->list, &qos_list);
+
+		//If new_value is lager than current value, update the freq
+		cur_value = (s32)pm_qos_read_req_value(req->pm_qos_class, req);
+		npu_dbg("[U%u]New Freq. category : %u freq : %u\n",
+				qr->sessionUID, qr->eCategory, qr->req_freq);
+		if (cur_value < new_value) {
+			npu_dbg("[U%u]Update Freq. category : %u freq : %u\n",
+					qr->sessionUID, qr->eCategory, qr->req_freq);
+			pm_qos_update_request(req, new_value);
+		}
+		return ret;
 	}
-	return ret;
+}
+
+
+static s32 __is_preset_from_showcase(void)
+{
+	struct list_head *pos, *q;
+	struct npu_session_qos_req *qr;
+
+	list_for_each_safe(pos, q, &qos_list) {
+		qr = list_entry(pos, struct npu_session_qos_req, list);
+		switch (qr->eCategory) {
+		case NPU_S_PARAM_QOS_NPU_PRESET:
+		case NPU_S_PARAM_QOS_DNC_PRESET:
+		case NPU_S_PARAM_QOS_MIF_PRESET:
+		case NPU_S_PARAM_QOS_INT_PRESET:
+		case NPU_S_PARAM_QOS_CL0_PRESET:
+		case NPU_S_PARAM_QOS_CL1_PRESET:
+		case NPU_S_PARAM_QOS_CL2_PRESET:
+		case NPU_S_PARAM_QOS_MO_SCEN_PRESET:
+		case NPU_S_PARAM_QOS_CPU_AFF_PRESET:
+			if (qr->req_freq > 0)
+				return 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static bool npu_qos_preset_is_valid_value(int value)
+{
+	if (value >= 0)
+		return true;
+
+	if (value == NPU_QOS_DEFAULT_VALUE)
+		return true;
+
+	return false;
+}
+
+static s32 npu_qos_preset_get_req_value(int value)
+{
+	if (value == NPU_QOS_DEFAULT_VALUE)
+		return 0;
+	else
+		return value;
 }
 
 npu_s_param_ret npu_qos_param_handler(struct npu_session *sess, struct vs4l_param *param, int *retval)
 {
 	BUG_ON(!sess);
 	BUG_ON(!param);
+
+	npu_info("uid:%u category:%u offset:%u\n", sess->uid, param->target, param->offset);
 
 	mutex_lock(&qos_setting->npu_qos_lock);
 
@@ -316,86 +396,167 @@ npu_s_param_ret npu_qos_param_handler(struct npu_session *sess, struct vs4l_para
 		qos_setting->req_dnc_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_dnc,
 					qos_setting->req_dnc_freq);
-
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
+		goto ok_exit;
 
 	case NPU_S_PARAM_QOS_NPU:
 		qos_setting->req_npu_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_npu,
 				qos_setting->req_npu_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_MIF:
 		qos_setting->req_mif_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_mif,
 				qos_setting->req_mif_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_INT:
 		qos_setting->req_int_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_int,
 				qos_setting->req_int_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_DNC_MAX:
 		qos_setting->req_dnc_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_dnc_max,
 					qos_setting->req_dnc_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_NPU_MAX:
 		qos_setting->req_npu_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_npu_max,
 				qos_setting->req_npu_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_MIF_MAX:
 		qos_setting->req_mif_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_mif_max,
 				qos_setting->req_mif_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_INT_MAX:
 		qos_setting->req_int_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_int_max,
 				qos_setting->req_int_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_CL0:
 		qos_setting->req_cl0_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl0,
 				qos_setting->req_cl0_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_CL1:
 		qos_setting->req_cl1_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl1,
 				qos_setting->req_cl1_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
 	case NPU_S_PARAM_QOS_CL2:
 		qos_setting->req_cl2_freq = param->offset;
 		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl2,
 				qos_setting->req_cl2_freq);
+		goto ok_exit;
 
-		mutex_unlock(&qos_setting->npu_qos_lock);
-		return S_PARAM_HANDLED;
+	case NPU_S_PARAM_QOS_NPU_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_npu_freq =
+			npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_npu,
+				qos_setting->req_npu_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_DNC_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_dnc_freq =
+			npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_dnc,
+				qos_setting->req_dnc_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_MIF_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_mif_freq =
+			npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_mif,
+				qos_setting->req_mif_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_INT_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_int_freq =
+			npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target,
+				&qos_setting->npu_qos_req_int,
+				qos_setting->req_int_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_CL0_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_cl0_freq = npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl0,
+				qos_setting->req_cl0_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_CL1_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_cl1_freq = npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl1,
+				qos_setting->req_cl1_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_CL2_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_cl2_freq = npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, &qos_setting->npu_qos_req_cpu_cl2,
+				qos_setting->req_cl2_freq);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_MO_SCEN_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_mo_scen = npu_qos_preset_get_req_value(param->offset);
+		__req_param_qos(sess->uid, param->target, NULL, qos_setting->req_mo_scen);
+		goto ok_preset_exit;
+
+	case NPU_S_PARAM_QOS_CPU_AFF_PRESET:
+		if (!npu_qos_preset_is_valid_value(param->offset))
+			goto ok_preset_exit;
+
+		qos_setting->req_cpu_aff = param->offset;
+		/* To be implemented */
+		goto ok_preset_exit;
+
 	case NPU_S_PARAM_CPU_AFF:
 	case NPU_S_PARAM_QOS_RST:
 	default:
 		mutex_unlock(&qos_setting->npu_qos_lock);
 		return S_PARAM_NOMB;
 	}
+
+ok_preset_exit:
+	if (__is_preset_from_showcase())
+		npu_scheduler_disable(qos_setting->info);
+	else
+		npu_scheduler_enable(qos_setting->info);
+ok_exit:
+	mutex_unlock(&qos_setting->npu_qos_lock);
+	return S_PARAM_HANDLED;
 }
 
 static struct device_attribute npu_qos_sysfs_attr[] = {
@@ -484,12 +645,12 @@ static int npu_qos_sysfs_create(struct npu_system *system)
 
 	device = container_of(system, struct npu_device, system);
 
-	npu_info("npu qos-sysfs create\n");
-	npu_info("creating sysfs group %s\n", npu_qos_attr_group.name);
+	probe_info("npu qos-sysfs create\n");
+	probe_info("creating sysfs group %s\n", npu_qos_attr_group.name);
 
 	ret = sysfs_create_group(&device->dev->kobj, &npu_qos_attr_group);
 	if (ret) {
-		npu_err("failed to create sysfs for %s\n",
+		probe_err("failed to create sysfs for %s\n",
 						npu_qos_attr_group.name);
 	}
 

@@ -441,6 +441,7 @@ int sensor_2ld_cis_select_setfile(struct v4l2_subdev *subdev)
 	struct is_module_enum *module;
 	struct is_device_sensor_peri *sensor_peri = NULL;
 	struct sensor_open_extended *ext_info;
+	u8 check = 0;
 
 	WARN_ON(!subdev);
 
@@ -516,6 +517,11 @@ int sensor_2ld_cis_select_setfile(struct v4l2_subdev *subdev)
 #endif
 		break;
 	}
+
+	I2C_MUTEX_LOCK(cis->i2c_lock);
+	ret |= is_sensor_read8(cis->client, 0x0016, &check);
+	I2C_MUTEX_UNLOCK(cis->i2c_lock);
+	info("2ld sensor revision 0x0016(%#x), %s sample\n", check, check == 0x10 ? "GF" : "SF");
 
 	return ret;
 }

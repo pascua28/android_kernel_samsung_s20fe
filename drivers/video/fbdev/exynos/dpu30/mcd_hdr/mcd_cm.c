@@ -301,13 +301,12 @@ void mcd_cm_sfr(struct mcd_hdr_device *hdr, struct mcd_cm_params_info *params)
                 OTT_NONE;
 
             //-------------------------------------------------------------------------------------------------
-            const unsigned int applyDither = (params->needDither && (o_type == INDEX_TYPE_SDR)) ? 1 : 0;
+            const unsigned int valid_hdr10 = ((src_gamma == INDEX_GAMMA_ST2084) && (src_gamut == INDEX_GAMUT_BT2020)) ? 1 : 0;
+            const unsigned int valid_hdr10p = (valid_hdr10 && (params->hdr10p_lut != NULL)) ? (((*params->hdr10p_lut) == 1) ? 1 : 0) : 0;
+            const unsigned int dither_allow = ((valid_hdr10p == 0) && (valid_hdr10) && (params->src_max_luminance > 3000)) ? 1 : 0;
+            const unsigned int applyDither = (params->needDither && (o_type == INDEX_TYPE_SDR) && dither_allow) ? 1 : 0;
             //-------------------------------------------------------------------------------------------------
-            {
-                const unsigned int valid_hdr10p = (params->hdr10p_lut != NULL) ? (((*params->hdr10p_lut) == 1) ? 1 : 0) : 0;
-                tm_dynamic = ((hdr->id == MCD_L5) && (valid_hdr10p == 1)) ? (params->hdr10p_lut + 1) : NULL;
-            }
-
+            tm_dynamic = ((hdr->id == MCD_L5) && (valid_hdr10p == 1)) ? (params->hdr10p_lut + 1) : NULL;
             get_tables(&tables, tm_dynamic, tott,
                 src_gamma, src_gamut, params->src_max_luminance,
                 dst_gamma, dst_gamut, params->dst_max_luminance);
