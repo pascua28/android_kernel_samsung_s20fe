@@ -50,12 +50,17 @@ fi
 
 make -j8 -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE CC=$KERNEL_LLVM_BIN CLANG_TRIPLE=$CLANG_TRIPLE
 
-IMAGE="out/arch/arm64/boot/Image.gz-dtb"
+cat out/arch/arm64/boot/dts/vendor/qcom/*.dtb > out/dtb.img
+
+DTB="out/dtb.img"
+
+IMAGE="out/arch/arm64/boot/Image.gz"
 
 if [[ -f "$IMAGE" ]]; then
 	rm AnyKernel3/zImage > /dev/null 2>&1
 	rm AnyKernel3/*.zip > /dev/null 2>&1
-	cp $IMAGE AnyKernel3/zImage
+	cp $IMAGE AnyKernel3/Image.gz
+	cp $DTB AnyKernel3/dtb
 	cd AnyKernel3
 	zip -r9 Kernel-$MODEL.zip .
 fi

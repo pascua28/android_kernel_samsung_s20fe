@@ -142,3 +142,4 @@ scripts/cfp/common.pyc
 scripts/crypto/__pycache__/
 zImage
 *.zip
+*dtb
