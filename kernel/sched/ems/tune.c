@@ -2026,7 +2026,7 @@ static int __init emstune_init(void)
 	emstune_initialized = true;
 
 	emstune_add_request(&emstune_user_req);
-	emstune_boost_timeout(&emstune_user_req, 45 * USEC_PER_SEC);
+	emstune_boost_timeout(&emstune_user_req, 40 * USEC_PER_SEC);
 
 	return 0;
 }
