@@ -6756,7 +6756,7 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 			new_util = max(min_util, new_util);
 			if ((!(prefer_idle && idle_cpu(i))
 				&& new_util > capacity_orig) ||
-				!task_fits_capacity(p, capacity_orig))
+				!task_fits_capacity(p, capacity_orig, i))
 				continue;
 
 			/*
