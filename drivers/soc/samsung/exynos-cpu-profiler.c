@@ -9,7 +9,6 @@
 #include <linux/cpuhotplug.h>
 #include <linux/completion.h>
 #include <linux/kthread.h>
-#include <linux/ems.h>
 
 #include <asm/perf_event.h>
 
@@ -223,9 +222,7 @@ s32 cpupro_get_temp(s32 id)
 
 void cpupro_set_margin(s32 id, s32 margin)
 {
-	struct domain_profiler *dompro = get_dom_by_migov_id(id);
-
-	esg_set_migov_boost(cpumask_first(&dompro->cpus), margin / 10);
+	return;
 }
 
 void cpupro_set_dom_profile(struct domain_profiler *dompro, int enabled);

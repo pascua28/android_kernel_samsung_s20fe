@@ -21,7 +21,6 @@
 #include <linux/cpumask.h>
 #include <linux/cpufreq.h>
 #include <linux/pm_opp.h>
-#include <linux/ems.h>
 #include <linux/exynos-ucc.h>
 
 #include <soc/samsung/exynos-cpuhp.h>
@@ -41,14 +40,12 @@ struct exynos_ufc ufc = {
 	.last_max_input = -1,
 };
 struct cpufreq_policy *little_policy;
-static struct emstune_mode_request emstune_req_ufc;
 
 enum {
 	UFC_COL_VFREQ,
 	UFC_COL_BIG,
 	UFC_COL_MED,
 	UFC_COL_LIT,
-	UFC_COL_EMSTUNE,
 };
 
 static struct ucc_req ucc_req =
@@ -253,7 +250,6 @@ static void ufc_clear_min_qos(int ctrl_type)
 {
 	struct ufc_domain *ufc_dom;
 	struct pm_qos_request *pm_qos_handle = NULL;
-	bool emstune_mode_change = false;
 
 	list_for_each_entry(ufc_dom, &ufc.ufc_domain_list, list) {
 		pm_qos_handle = NULL;
@@ -261,7 +257,6 @@ static void ufc_clear_min_qos(int ctrl_type)
 		switch(ctrl_type) {
 		case PM_QOS_MIN_LIMIT:
 			pm_qos_handle = &ufc_dom->user_min_qos_req;
-			emstune_mode_change = true;
 			break;
 		case PM_QOS_MIN_WO_BOOST_LIMIT:
 			pm_qos_handle = &ufc_dom->user_min_qos_wo_boost_req;
@@ -272,12 +267,6 @@ static void ufc_clear_min_qos(int ctrl_type)
 			continue;
 
 		pm_qos_update_request(pm_qos_handle, 0);
-	}
-
-	if (emstune_mode_change) {
-		emstune_update_request(&emstune_req_ufc, DEFAULT_LEVEL);
-		ucc_requested_val = 0;
-		ucc_update_request(&ucc_req, ucc_requested_val);
 	}
 }
 
@@ -480,7 +469,6 @@ static void ufc_update_limit(int input_freq, int ctrl_type, int mode)
 	struct ufc_domain *ufc_dom;
 	struct ufc_table_info *table_info, *target_table_info = NULL;
 	int target_idx = 0;
-	bool emstune_mode_change = false;
 
 	if (input_freq <= 0) {
 		ufc_clear_pm_qos(ctrl_type);
@@ -512,7 +500,6 @@ static void ufc_update_limit(int input_freq, int ctrl_type, int mode)
 		switch (ctrl_type) {
 		case PM_QOS_MIN_LIMIT:
 			target_pm_qos = &ufc_dom->user_min_qos_req;
-			emstune_mode_change = true;
 			break;
 
 		case PM_QOS_MAX_LIMIT:
@@ -531,13 +518,6 @@ static void ufc_update_limit(int input_freq, int ctrl_type, int mode)
 
 		if (target_pm_qos)
 			pm_qos_update_request(target_pm_qos, target_freq);
-	}
-
-	if (emstune_mode_change) {
-		int level = target_table_info->ufc_table[UFC_COL_EMSTUNE][target_idx];
-		emstune_update_request(&emstune_req_ufc, level);
-		ucc_requested_val = level;
-		ucc_update_request(&ucc_req, ucc_requested_val);
 	}
 }
 
@@ -1048,11 +1028,3 @@ void __init exynos_ufc_init(void)
 
 	pr_info("exynos-ufc: Complete UFC driver initialization\n");
 }
-
-static int __init exynos_ufc_emstune_init(void)
-{
-	emstune_add_request(&emstune_req_ufc);
-
-	return 0;
-}
-late_initcall(exynos_ufc_emstune_init);

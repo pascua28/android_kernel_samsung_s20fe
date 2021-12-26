@@ -22,7 +22,6 @@
 #include <linux/pm_opp.h>
 #include <linux/cpu_cooling.h>
 #include <linux/suspend.h>
-#include <linux/ems.h>
 #include <linux/sec_pm_cpufreq.h>
 
 #include <trace/events/power.h>
@@ -872,8 +871,6 @@ static int exynos_cpufreq_pm_qos_callback(struct notifier_block *nb,
 	up_read(&policy->rwsem);
 
 	if (pm_qos_class == domain->pm_qos_max_class) {
-		rebuild_sched_energy_table(&domain->cpus, val,
-					policy->cpuinfo.max_freq, STATES_PMQOS);
 		qos_max = pm_qos_request(pm_qos_class);
 		if (qos_max < policy->cpuinfo.min_freq) {
 			domain->qos_max_freq = policy->cpuinfo.min_freq;
@@ -1226,9 +1223,6 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 	}
 	domain->freq_table[index].driver_data = index;
 	domain->freq_table[index].frequency = CPUFREQ_TABLE_END;
-
-	init_sched_energy_table(&domain->cpus, domain->table_size, table, volt_table,
-				domain->max_freq, domain->min_freq);
 
 	kfree(volt_table);
 

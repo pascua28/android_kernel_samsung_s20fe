@@ -1,8 +1,6 @@
 #include <linux/input/input_booster.h>
-#include <linux/ems.h>
 #include <linux/exynos-ucc.h>
 
-static struct emstune_mode_request emstune_req_input;
 static struct pm_qos_request cluster2_qos;
 static struct pm_qos_request cluster1_qos;
 static struct pm_qos_request cluster0_qos;
@@ -46,19 +44,10 @@ void set_hmp(int enable) {
 
 	if (enable != current_hmp_boost) {
 		pr_booster("[Input Booster2] ******      set_ehmp : %d ( %s )\n", enable, __FUNCTION__);
-		if (enable) {
-			emstune_update_request(&emstune_req_input, INPUT_LEVEL);
-		} else {
-			emstune_update_request(&emstune_req_input, DEFAULT_LEVEL);
-		}
 		current_hmp_boost = enable;
 	}
 
 	mutex_unlock(&input_lock);
-}
-
-void init_input_emstune(void) {
-	emstune_add_request(&emstune_req_input);
 }
 
 void ib_set_booster(int* qos_values)
@@ -119,8 +108,6 @@ void input_booster_init_vendor(int* release_val)
 	for (i = 0; i < MAX_RES_COUNT; i++) {
 		informations[i].release_value = release_val[i];
 	}
-
-	init_input_emstune();
 }
 
 void input_booster_exit_vendor()

@@ -19,11 +19,8 @@
 #include <soc/samsung/cal-if.h>
 #include <soc/samsung/exynos-devfreq.h>
 #include <linux/pm_qos.h>
-//#include <linux/ems.h>
 #include <linux/miscdevice.h>
 #include "../../../kernel/sched/sched.h"
-#include "../../../kernel/sched/ems/ems.h"
-//#include "../../../kernel/sched/tune.h"
 #include <linux/cpumask.h>
 #include <linux/kernel.h>
 
@@ -31,8 +28,6 @@
 #define GAME_NORMAL_CL1_MAX	2314000
 #define GAME_NORMAL_CL1_MAX_SSE	2314000
 #define GAME_LITE_GPU	260000
-
-static struct emstune_mode_request emstune_req_gmc;
 
 extern unsigned int get_cpufreq_max_limit(void);
 extern unsigned int get_ocp_clipped_freq(void);
@@ -87,9 +82,6 @@ static int gmc_thread(void *data)
 	int sus_array[2];
 	int gpu_max_lock = 0;
 	uint time_cnt = 1;
-	int online_cpus = 0;
-	int cpu = 0;
-	int cpu_util_avg = 0;
 //	int cl1_max_org = cl1_max;
 //	int ta_sse_ur_sum = 0;
 //	int ta_sse_cnt = 0;
@@ -110,19 +102,8 @@ static int gmc_thread(void *data)
 	pm_qos_add_request(&pm_qos_cl0_max, PM_QOS_CLUSTER0_FREQ_MAX, PM_QOS_CLUSTER0_FREQ_MAX_DEFAULT_VALUE);
 	pm_qos_add_request(&pm_qos_mif_max, PM_QOS_BUS_THROUGHPUT_MAX, PM_QOS_BUS_THROUGHPUT_MAX_DEFAULT_VALUE);
 	pm_qos_add_request(&pm_qos_mif_min, PM_QOS_BUS_THROUGHPUT, PM_QOS_BUS_THROUGHPUT_DEFAULT_VALUE);
-	emstune_add_request(&emstune_req_gmc);
 
 	while (is_running) {
-
-		// cpu util
-		cpu_util_avg = 0;
-		online_cpus = 0;
-		for_each_online_cpu(cpu) {
-			cpu_util_avg += ml_cpu_util(cpu);
-			online_cpus++;
-		}
-		cpu_util_avg /= online_cpus;
-
 		// gpu
 		gpu_util = gpu_dvfs_get_utilization();
 		gpu_freq = (uint)cal_dfs_cached_get_rate(cal_id_g3d);
@@ -130,8 +111,6 @@ static int gmc_thread(void *data)
 		sus_array[1] = gpu_dvfs_get_sustainable_info_array(1);
 		gpu_max_lock = gpu_dvfs_get_max_lock();
 
-		//pr_info("[%s] gmc -----> time:%ds cpu_util_avg:%d gpu_util:%d gpu_freq:%d / sus_array0:%d sus_array1:%d gpu_maxlock:%d\n", 
-		//		prefix, time_cnt++, cpu_util_avg, gpu_util, gpu_freq, sus_array[0], sus_array[1], gpu_max_lock);
 		time_cnt++;
 
 		if (is_game) {
@@ -196,24 +175,6 @@ static int gmc_thread(void *data)
 				pm_qos_update_request(&pm_qos_mif_min, PM_QOS_BUS_THROUGHPUT_DEFAULT_VALUE);
 			}
 
-#if 0
-			// cause: conflicting between MCD and slsi
-			if (gpu_freq <= gpu_lite) {
-				emstune_mode_change(NORMAL_MODE);
-				emstune_update_request(&emstune_req_gmc, 0);
-			} else {
-				if (sus_array[0] > 0) {
-					if (((gpu_freq <= sus_array[0]) || (gpu_max_lock == sus_array[0]))
-							&& gpu_util > sus_array[1]) {
-						emstune_mode_change(LIGHT_GAME_MODE);
-						emstune_update_request(&emstune_req_gmc, 0);
-					} else {
-						emstune_mode_change(NORMAL_MODE);
-						emstune_update_request(&emstune_req_gmc, 0);
-					}
-				}
-			}
-#endif
 			prev_is_game = 0;
 		}
 

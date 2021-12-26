@@ -3,7 +3,6 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
-#include <linux/ems.h>
 #include <linux/pm_qos.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
@@ -14,7 +13,6 @@
 
 #include "exynos-gpu-api.h"
 #include "../../video/fbdev/exynos/dpu30/decon.h"
-#include "../../../kernel/sched/ems/ems.h"
 
 /******************************************************************************/
 /*                            Structure for migov                             */
@@ -508,7 +506,6 @@ void migov_start_profile(void)
 	migov.start_frame_vsync_cnt = get_frame_vsync_cnt();
 
 	if (!migov.profile_only) {
-		set_lbt_overutil_with_migov(1);
 		if (is_enabled(MIGOV_CL0) || is_enabled(MIGOV_CL1) || is_enabled(MIGOV_CL2))
 			exynos_dm_dynamic_disable(1);
 		if (is_enabled(MIGOV_GPU))
@@ -556,7 +553,6 @@ void migov_finish_profile(void)
 	}
 
 	if (!migov.profile_only) {
-		set_lbt_overutil_with_migov(0);
 		if (is_enabled(MIGOV_CL0) || is_enabled(MIGOV_CL1) || is_enabled(MIGOV_CL2))
 			exynos_dm_dynamic_disable(0);
 		if (is_enabled(MIGOV_GPU))
@@ -609,10 +605,6 @@ static void wakeup_polling_task(bool new_mode)
 static int migov_update_callback(struct notifier_block *nb,
 				unsigned long val, void *v)
 {
-	struct emstune_set *cur_set = (struct emstune_set *)v;
-
-	wakeup_polling_task(cur_set->migov.migov_en);
-
 	return NOTIFY_OK;
 }
 static struct notifier_block migov_update_notifier = {
@@ -1227,8 +1219,6 @@ static s32 exynos_migov_probe(struct platform_device *pdev)
 #endif
 
 	mutex_init(&migov.lock);
-
-	emstune_register_mode_update_notifier(&migov_update_notifier);
 
 	migov.running_event = PROFILE_INVALID;
 	init_waitqueue_head(&migov.wq);

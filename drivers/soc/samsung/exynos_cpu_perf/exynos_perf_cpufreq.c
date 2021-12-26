@@ -6,6 +6,7 @@
 #include <linux/device.h>
 #include <linux/kobject.h>
 #include <linux/cpufreq.h>
+#include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/cpufreq.h>
 #include <linux/uaccess.h>
@@ -18,7 +19,6 @@
 #include <linux/of.h>
 #include <soc/samsung/cal-if.h>
 #include <soc/samsung/exynos-devfreq.h>
-#include "../../../kernel/sched/ems/ems.h"
 
 #define MAX_CLUSTER 3
 
@@ -88,7 +88,6 @@ static int cpufreq_log_thread(void *data)
 	int gpu_util;
 	struct task_struct *tsk;
 	int grp_start, grp_num;
-	int cpu_util;
 
 	if (is_running) {
 		pr_info("[%s] already running!!\n", prefix);
@@ -197,12 +196,6 @@ static int cpufreq_log_thread(void *data)
 		tsk = find_task_by_vpid(pid);
 		cpu = (!tsk)? 0 : task_cpu(tsk);
 		ret += snprintf(buf + ret, buf_size - ret, "%d ", cpu);
-		// cpu util
-		for_each_online_cpu(cpu) {
-			cpu_util = (ml_cpu_util(cpu) * 100) / capacity_cpu(cpu, USS);
-			cpu_util = (cpu_util > 100)? 100 : cpu_util;
-			ret += snprintf(buf + ret, buf_size - ret, "%d ", cpu_util);
-		}
 		ret -= 1;
 		ret += snprintf(buf + ret, buf_size - ret, "\n");
 

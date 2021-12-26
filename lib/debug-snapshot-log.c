@@ -1891,10 +1891,6 @@ int secdbg_show_busy_task(unsigned int cpu, unsigned long long duration, int cou
 	if (is_busy_info_list)
 		return -1;
 
-	pr_auto(ASL5, "CPU%u [CFS util_avg:%lu load_avg:%lu nr_running:%u][RT util_avg:%lu load_avg:%lu rt_nr_running:%u][avg_rt util_avg:%lu]",	\
-		cpu, cpu_rq(cpu)->cfs.avg.util_avg, cpu_rq(cpu)->cfs.avg.load_avg, cpu_rq(cpu)->cfs.nr_running,	\
-		cpu_rq(cpu)->rt.avg.util_avg, cpu_rq(cpu)->rt.avg.load_avg, cpu_rq(cpu)->rt.rt_nr_running, cpu_rq(cpu)->avg_rt.util_avg);
-
 	if (!log_item->entry.enabled)
 		return -1;
 
