@@ -335,7 +335,7 @@ void init_multi_load(struct sched_entity *se)
 	memset(ml, 0, sizeof(*ml));
 }
 
-static u32 default_inherit_ratio = 25;
+static u32 default_inherit_ratio = 20;
 
 void post_init_entity_multi_load(struct sched_entity *se, u64 now)
 {
