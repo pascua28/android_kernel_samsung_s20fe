@@ -193,7 +193,7 @@ static u32 abox_rdma_mailbox_read(struct device *dev, u32 index)
 }
 
 static void abox_rdma_mailbox_update_bits(struct device *dev, u32 index,
-	u32 mask, u32 value)
+		u32 mask, u32 value)
 {
 	struct regmap *regmap = dev_get_regmap(dev, NULL);
 	int ret;
@@ -1183,12 +1183,12 @@ static int abox_rdma_compr_format_get(struct snd_kcontrol *kcontrol,
 }
 
 static int abox_rdma_compr_mailbox_put(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
+		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
 	struct device *dev = cmpnt->dev;
 	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
+			(struct soc_mixer_control *)kcontrol->private_value;
 	unsigned int shift = mc->shift;
 	int max = mc->max;
 	unsigned int mask = (1 << fls(max)) - 1;
@@ -1197,18 +1197,18 @@ static int abox_rdma_compr_mailbox_put(struct snd_kcontrol *kcontrol,
 	dev_dbg(dev, "%s: %u\n", __func__, val);
 
 	abox_rdma_mailbox_update_bits(dev, mc->reg, mask << shift,
-		val << shift);
+			val << shift);
 
 	return 0;
 }
 
 static int abox_rdma_compr_mailbox_get(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
+		struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
 	struct device *dev = cmpnt->dev;
 	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
+			(struct soc_mixer_control *)kcontrol->private_value;
 	unsigned int shift = mc->shift;
 	int max = mc->max;
 	unsigned int mask = (1 << fls(max)) - 1;

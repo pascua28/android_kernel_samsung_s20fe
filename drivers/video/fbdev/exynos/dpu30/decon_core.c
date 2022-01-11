@@ -202,7 +202,7 @@ void decon_dump(struct decon_device *decon, bool panel_dump)
 				ktime_to_ns(decon->d.buf_cnt_bak.timestamp));
 		dpu_show_dma_attach_info("decon_dump", decon, 1);
 	}
-	dpu_show_readback_buf_info(decon, 0);
+	dpu_show_readback_buf_info(decon, 1);
 
 	__decon_dump(decon->id, decon->res.regs, base_regs,
 			decon->lcd_info->dsc.en);
@@ -816,6 +816,9 @@ static int decon_enable(struct decon_device *decon)
 retry_enable:
 	DPU_EVENT_LOG(DPU_EVT_UNBLANK, &decon->sd, ktime_set(0, 0));
 	decon_info("decon-%d %s +\n", decon->id, __func__);
+
+	decon->wc_idx = 0;
+
 	ret = _decon_enable(decon, next_state);
 	if (ret < 0) {
 		decon_err("decon-%d failed to set %s (ret %d)\n",
@@ -862,6 +865,8 @@ static int decon_doze(struct decon_device *decon)
 
 retry_enable:
 	decon_info("decon-%d %s +\n", decon->id, __func__);
+	decon->wc_idx = 0;
+
 	ret = _decon_enable(decon, next_state);
 	if (ret < 0) {
 		decon_err("decon-%d failed to set %s (ret %d)\n",
@@ -1928,15 +1933,62 @@ int decon_check_limitation(struct decon_device *decon, int idx,
 	return 0;
 }
 
+/* To avoid sysmmu page fault due to small buffer allocation */
+static int decon_check_buffer_size(struct decon_device *decon,
+		struct decon_win_config *config,
+		struct decon_reg_data *regs, int idx,
+		const struct dpu_fmt *fmt_info)
+{
+	int ret = 0, i;
+	u32 cfg_size[3] = {0, 0, 0};
+	u32 buf_size[3] = {0, 0, 0};
+	u32 mpc = 1; /* memory per component : byte - default: 8bit */
+	u32 hv_sub = 2; /* sub-sampling of chroma - default: YUV420 */
+
+	if (fmt_info->cs == DPU_COLORSPACE_RGB) { /* 1-plane */
+		cfg_size[0] = config->src.f_w * config->src.f_h *
+			(fmt_info->bpp + fmt_info->padding); /* bits */
+		cfg_size[0] = (cfg_size[0] + 7) / 8; /* bytes */
+
+		buf_size[0] = (u32)(regs->dma_buf_data[idx][0].dma_buf->size);
+	} else {
+		if (fmt_info->bpp == 10)
+			mpc = 2;
+		/* Y : bytes */
+		cfg_size[0] = config->src.f_w * config->src.f_h * mpc;
+		/* C : bytes */
+		if (fmt_info->cs == DPU_COLORSPACE_YUV422)
+			hv_sub = 1;
+		cfg_size[1] = cfg_size[0] / hv_sub;
+
+		for (i = 0; i < fmt_info->num_buffers; i++)
+			buf_size[i] = (u32)(regs->dma_buf_data[idx][i].dma_buf->size);
+
+		/* single-fd case */
+		if (fmt_info->num_buffers == 1)
+			cfg_size[0] = cfg_size[0] + cfg_size[1];
+	}
+
+	for (i = 0; i < fmt_info->num_buffers; i++) {
+		decon_dbg("%s[fd%d]: cfg size(0x%x B), buf size(0x%x B)\n",
+			__func__, i, cfg_size[i], buf_size[i]);
+		if (cfg_size[i] > buf_size[i]) {
+			decon_err("[w%d:fd%d] buf size(0x%x) < required size(0x%x)\n",
+				idx, i, buf_size[i], cfg_size[i]);
+			ret = -EINVAL;
+		}
+	}
+
+	return ret;
+}
+
 static int decon_set_win_buffer(struct decon_device *decon,
 		struct decon_win_config *config,
 		struct decon_reg_data *regs, int idx)
 {
-	int ret, i;
+	int ret;
 	struct decon_rect r;
 	struct dma_fence *fence = NULL;
-	u32 cfg_size = 0;
-	u32 buf_size = 0;
 	const struct dpu_fmt *fmt_info;
 
 	fmt_info = dpu_find_fmt_info(config->format);
@@ -1965,24 +2017,8 @@ static int decon_set_win_buffer(struct decon_device *decon,
 		decon_dbg("acq_fence(%d), fence(%p)\n", config->acq_fence, fence);
 	}
 
-	/* To avoid sysmmu page fault due to small buffer allocation */
-	/* TODO: aligned size calculation is needed in case of YUV formats */
-	cfg_size = config->src.f_w * config->src.f_h *
-		(fmt_info->bpp + fmt_info->padding);	/* bits */
-
-	for (i = 0; i < fmt_info->num_buffers; ++i)	/* bytes */
-		buf_size += (u32)(regs->dma_buf_data[idx][i].dma_buf->size);
-	buf_size *= 8;	/* bits */
-
-	decon_dbg("%s: cfg size(0x%x bits), buf size(0x%x bits)\n", __func__,
-			cfg_size, buf_size);
-
-	if (cfg_size > buf_size) {
-		decon_err("[w%d] alloc buf size(0x%x) < required size(0x%x)\n",
-				idx, buf_size, cfg_size);
-		ret = -EINVAL;
+	if (decon_check_buffer_size(decon, config, regs, idx, fmt_info) < 0)
 		goto err;
-	}
 
 	regs->protection[idx] = config->protection;
 	if (config->protection)
@@ -2170,15 +2206,15 @@ static int decon_set_dpp_config(struct decon_device *decon,
 			}
 
 			video_meta = (struct exynos_video_meta *)dma_buf_vmap(meta_dma_buf);
+			if (IS_ERR_OR_NULL(video_meta)) {
+				decon_err("%s: failed to map meta data\n", __func__);
+				goto dpp_config;
+			}
 
-#if 0
-			decon_info("DECON:%d:HDR MAX LUMA : %d\n", decon->id,
-				dpp_config.hdr_info.dst_max_luminance);
-#endif
 			dpp_config.hdr_info.type = video_meta->etype;
 
 			if (video_meta->etype & VIDEO_INFO_TYPE_HDR_DYNAMIC)
-				memcpy(&dpp_config.hdr_info.lut, video_meta->shdrdynamicinfo.reserved,
+				memcpy(&dpp_config.hdr_info.lut, video_meta->sHdrDynamicInfo.reserved,
 					sizeof(unsigned int) * MAX_HDR10P_LUT);
 
 			dma_buf_vunmap(meta_dma_buf, video_meta);
@@ -2708,6 +2744,10 @@ static int decon_set_hdr_info(struct decon_device *decon,
 	}
 	video_meta = (struct exynos_video_meta *)dma_buf_vmap(
 			regs->dma_buf_data[win_num][mp_idx].dma_buf);
+	if (IS_ERR_OR_NULL(video_meta)) {
+		decon_err("Failed to get virtual address (err %pK)\n", video_meta);
+		return -ENOMEM;
+	}
 
 	hdr_cmp = memcmp(&decon->prev_hdr_info,
 			&video_meta->shdr_static_info,
@@ -3040,6 +3080,8 @@ static void decon_update_regs(struct decon_device *decon,
 				decon_save_cur_buf_info(decon, regs);
 				decon_wait_for_vsync(decon, VSYNC_TIMEOUT_MSEC);
 				decon->win_up.force_full = true;
+				DPU_EVENT_LOG_WINCON(&decon->sd, regs,
+					UH_ID_IFENCE_ERR);
 				goto fence_err;
 			}
 		}
@@ -3055,6 +3097,8 @@ static void decon_update_regs(struct decon_device *decon,
 				decon_save_cur_buf_info(decon, regs);
 				decon_wait_for_vsync(decon, VSYNC_TIMEOUT_MSEC);
 				decon->win_up.force_full = true;
+				DPU_EVENT_LOG_WINCON(&decon->sd, regs,
+					UH_ID_OFENCE_ERR);
 				goto fence_err;
 			}
 		}
@@ -3087,6 +3131,7 @@ static void decon_update_regs(struct decon_device *decon,
 		decon_save_cur_buf_info(decon, regs);
 		decon_wait_for_vsync(decon, VSYNC_TIMEOUT_MSEC);
 		decon->win_up.force_full = true;
+		DPU_EVENT_LOG_WINCON(&decon->sd, regs, UH_ID_DPP_ERR);
 		goto fence_err;
 	}
 
@@ -3115,7 +3160,7 @@ static void decon_update_regs(struct decon_device *decon,
 	decon->bts.ops->bts_update_bw(decon, regs, 0);
 #endif
 #endif
-	DPU_EVENT_LOG_WINCON(&decon->sd, regs);
+	DPU_EVENT_LOG_WINCON(&decon->sd, regs, UH_ID_NORMAL);
 
 	if (regs->num_of_window) {
 		if (__decon_update_regs(decon, regs) < 0) {
@@ -3316,7 +3361,7 @@ int decon_update_last_regs(struct decon_device *decon,
 	decon->bts.ops->bts_update_bw(decon, regs, 0);
 #endif
 
-	DPU_EVENT_LOG_WINCON(&decon->sd, regs);
+	DPU_EVENT_LOG_WINCON(&decon->sd, regs, UH_ID_LAST_REGS);
 
 	decon_to_psr_info(decon, &psr);
 	if (regs->num_of_window) {
@@ -3608,6 +3653,43 @@ config_err:
 	return ret;
 }
 
+/* To check original win_config data delivered from HWC
+ * - idx   : to find a matching up_handler
+ *           if (NORMAL) updated, else (-1)
+ * - fps   : newly requested fps or existing fps info
+ * - winup : Partial or MRES config info
+ */
+static void decon_save_win_config_event(struct decon_device *decon,
+		struct decon_win_config_data *win_data, enum dpu_wc_id id)
+{
+	decon->win_raw.id = id;
+	decon->win_raw.idx = -1;
+	decon->win_raw.fps = decon->lcd_info->fps;
+
+	if (id & WC_ID_FAIL) {
+		decon->win_raw.state = WC_ID_FAIL;
+		memset(&decon->win_raw.winup, 0,
+				sizeof(struct decon_frame));
+	} else if (id & (WC_ID_SKIP | WC_ID_NORMAL)) {
+		if (id & WC_ID_NORMAL)
+			decon->win_raw.idx = decon->wc_idx;
+		decon->win_raw.fps = win_data->fps;
+		if (decon->win_raw.fps != 0)
+			decon->win_raw.id |= WC_ID_FPS;
+		decon->win_raw.state =
+				win_data->config[DECON_WIN_UPDATE_IDX].state;
+		memcpy(&decon->win_raw.winup,
+				&win_data->config[DECON_WIN_UPDATE_IDX].dst,
+				sizeof(struct decon_frame));
+	} else {
+		decon_err("Unknown Win_Config ID(%d)\n", id);
+		memset(&decon->win_raw.winup, 0,
+				sizeof(struct decon_frame));
+	}
+
+	DPU_EVENT_LOG(DPU_EVT_WIN_CONFIG, &decon->sd, ktime_set(0, 0));
+}
+
 #ifndef CONFIG_EXYNOS_SET_ACTIVE_WITH_EMPTY_WINDOW
 static int decon_set_vrr(struct decon_device *decon,
 	struct decon_win_config_data *win_data, struct decon_reg_data *regs)
@@ -3674,6 +3756,7 @@ static int decon_set_win_config(struct decon_device *decon,
 #endif
 		decon->state == DECON_STATE_TUI ||
 		IS_ENABLED(CONFIG_EXYNOS_VIRTUAL_DISPLAY)) {
+		decon_save_win_config_event(decon, win_data, WC_ID_SKIP);
 #if defined(CONFIG_EXYNOS_COMMON_PANEL) || \
 	defined(CONFIG_EXYNOS_READ_ESD_SOLUTION)
 		decon_warn("decon-%d skip win_config(state:%s, bypass:%s)\n",
@@ -3683,11 +3766,15 @@ static int decon_set_win_config(struct decon_device *decon,
 		decon_warn("decon-%d skip win_config(state:%s)\n",
 				decon->id, decon_state_names[decon->state]);
 #endif
-		win_data->retire_fence = decon_create_fence(decon, &sync_ifile);
-		if (win_data->retire_fence < 0)
-			goto err;
-		fd_install(win_data->retire_fence, sync_ifile->file);
-		decon_signal_fence(decon, sync_ifile->fence);
+		num_of_window = decon_get_active_win_count(decon, win_data, &readback_req);
+
+		if (num_of_window) {
+			win_data->retire_fence = decon_create_fence(decon, &sync_ifile);
+			if (win_data->retire_fence < 0)
+				goto err;
+			fd_install(win_data->retire_fence, sync_ifile->file);
+			decon_signal_fence(decon, sync_ifile->fence);
+		}
 
 #if defined(CONFIG_EXYNOS_SUPPORT_READBACK)
 		num_of_window = decon_get_active_win_count(decon, win_data, &readback_req);
@@ -3717,6 +3804,9 @@ static int decon_set_win_config(struct decon_device *decon,
 	regs->mask_layer = decon_get_mask_layer(decon, win_data);
 #endif
 
+	decon->wc_idx++;
+	decon_save_win_config_event(decon, win_data, WC_ID_NORMAL);
+
 	num_of_window = decon_get_active_win_count(decon, win_data, &readback_req);
 	if (num_of_window) {
 		win_data->retire_fence = decon_create_fence(decon, &sync_ifile);
@@ -3740,6 +3830,8 @@ static int decon_set_win_config(struct decon_device *decon,
 		}
 #endif
 	} else {
+		decon_info("%s: fps(%d->%d) update request!\n", __func__,
+				decon->lcd_info->fps, win_data->fps);
 		win_data->retire_fence = -1;
 #ifdef CONFIG_EXYNOS_SET_ACTIVE_WITH_EMPTY_WINDOW
 		regs->fps = win_data->fps;
@@ -3800,12 +3892,15 @@ add_new_regs:
 			__func__, win_data->extra.remained_frames);
 	}
 
+
 	mutex_unlock(&decon->up.lock);
 
+	regs->idx = decon->wc_idx;
 	kthread_queue_work(&decon->up.worker, &decon->up.work);
 #ifdef CONFIG_SUPPORT_MASK_LAYER
 	decon_wait_mask_layer_trigger(decon);
 #endif
+
 	/**
 	 * The code is moved here because the DPU driver may get a wrong fd
 	 * through the released file pointer,
@@ -4774,6 +4869,10 @@ static int decon_fb_alloc_memory(struct decon_device *decon, struct decon_win *w
 	}
 
 	vaddr = dma_buf_vmap(buf);
+	if (IS_ERR_OR_NULL(vaddr)) {
+		dev_err(decon->dev, "dma_buf_vmap() failed\n");
+		goto err_map;
+	}
 
 	memset(vaddr, 0x00, size);
 
@@ -4852,6 +4951,10 @@ static int decon_fb_test_alloc_memory(struct decon_device *decon, u32 size)
 	}
 
 	vaddr = dma_buf_vmap(buf);
+	if (IS_ERR_OR_NULL(v_addr)) {
+		dev_err(decon->dev, "dma_buf_vmap() failed\n");
+		goto err_map;
+	}
 
 	memset(vaddr, 0x00, size);
 

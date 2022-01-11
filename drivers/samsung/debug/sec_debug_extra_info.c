@@ -37,6 +37,8 @@
 #define SEC_DEBUG_SHARED_MAGIC2 0x14F014F0
 #define SEC_DEBUG_SHARED_MAGIC3 0x00010001
 
+#define ETR_A_PROC_SIZE SZ_2K
+
 #include "sec_debug_extra_info_keys.c"
 
 static bool exin_ready;
@@ -666,7 +668,7 @@ static void sec_debug_store_extra_info(char (*keys)[MAX_ITEM_KEY_LEN], int nr_ke
 	void *p;
 	char *v, *start_addr = ptr;
 
-	memset(ptr, 0, SZ_1K);
+	memset(ptr, 0, ETR_A_PROC_SIZE);
 
 	for (i = 0; i < nr_keys; i++) {
 		p = get_bk_item(keys[i]);
@@ -682,7 +684,7 @@ static void sec_debug_store_extra_info(char (*keys)[MAX_ITEM_KEY_LEN], int nr_ke
 		len = (unsigned long)ptr + strlen(p) + get_val_len(v)
 				+ MAX_EXTRA_INFO_HDR_LEN;
 
-		max_len = (unsigned long)start_addr + SZ_1K;
+		max_len = (unsigned long)start_addr + ETR_A_PROC_SIZE;
 
 		if (len > max_len)
 			break;
@@ -1112,6 +1114,12 @@ void secdbg_exin_set_aud(char *str)
 	set_item_val("AUD", "%s", str);
 }
 
+void secdbg_exin_set_gpuinfo(const char *str)
+{
+	clear_item_val("GPU");
+	set_item_val("GPU", "%s", str);
+}
+
 void secdbg_exin_set_epd(char *str)
 {
 	set_item_val("EPD", "%s", str);
@@ -1285,7 +1293,7 @@ static const struct file_operations sec_debug_reset_rwc_proc_fops = {
 
 static int set_debug_reset_extra_info_proc_show(struct seq_file *m, void *v)
 {
-	char buf[SZ_1K];
+	char buf[ETR_A_PROC_SIZE];
 
 	if (0)
 		test_v3(m);
@@ -1353,7 +1361,7 @@ static int __init secdbg_extra_info_init(void)
 	if (!entry)
 		return -ENOMEM;
 
-	proc_set_size(entry, SZ_1K);
+	proc_set_size(entry, ETR_A_PROC_SIZE);
 
 	entry = proc_create("reset_rwc", S_IWUGO, NULL,
 				&sec_debug_reset_rwc_proc_fops);

@@ -68,6 +68,9 @@ static inline void dpu_event_log_decon
 		log->data.pm.elapsed = ktime_sub(ktime_get(), log->time);
 		break;
 	case DPU_EVT_WIN_CONFIG:
+		memcpy(&log->data.win_raw, &decon->win_raw,
+					sizeof(struct decon_win_rawdata));
+		break;
 	case DPU_EVT_TRIG_UNMASK:
 	case DPU_EVT_TRIG_MASK:
 	case DPU_EVT_FENCE_RELEASE:
@@ -323,7 +326,8 @@ void DPU_EVENT_LOG(dpu_event_t type, struct v4l2_subdev *sd, ktime_t time)
 	}
 }
 
-void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs)
+void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs,
+		enum dpu_uh_id id)
 {
 	struct decon_device *decon = container_of(sd, struct decon_device, sd);
 	struct dpu_log *log;
@@ -339,10 +343,14 @@ void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs)
 	log->time = ktime_get();
 	log->type = DPU_EVT_UPDATE_HANDLER;
 
+	log->data.reg.win_raw.id = id;
+	log->data.reg.win_raw.idx = regs->idx;
+	log->data.reg.win_raw.fps = decon->lcd_info->fps;
 #if defined(CONFIG_EXYNOS_COMMON_PANEL)
 	memcpy(&log->data.reg.up_region, &regs->up_region,
 			sizeof(struct decon_rect));
 #endif
+
 	for (win = 0; win < decon->dt.max_win; win++) {
 		if (regs->win_regs[win].wincon & WIN_EN_F(win)) {
 			memcpy(&log->data.reg.win_regs[win], &regs->win_regs[win],
@@ -357,16 +365,19 @@ void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs)
 
 	/* window update case : last window */
 	win  = DECON_WIN_UPDATE_IDX;
-	if (regs->dpp_config[win].state == DECON_WIN_STATE_UPDATE) {
+	if (regs->dpp_config[win].state == DECON_WIN_STATE_UPDATE ||
+		regs->dpp_config[win].state == DECON_WIN_STATE_MRESOL) {
 		window_updated = true;
 		memcpy(&log->data.reg.win_config[win], &regs->dpp_config[win],
 				sizeof(struct decon_win_config));
 	}
 
 	/* write-back case : last window */
-	if (decon->dt.out_type == DECON_OUT_WB)
+	if (decon->dt.out_type == DECON_OUT_WB || regs->readback.request) {
+		win = decon->dt.wb_win;
 		memcpy(&log->data.reg.win_config[win], &regs->dpp_config[win],
 				sizeof(struct decon_win_config));
+	}
 
 	if (window_updated) {
 		log->data.reg.win.x = regs->dpp_config[win].dst.x;

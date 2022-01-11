@@ -211,6 +211,7 @@ int sensor_3l6_cis_init(struct v4l2_subdev *subdev)
 	cis->cis_data->cur_height = SENSOR_3L6_MAX_HEIGHT;
 	cis->cis_data->low_expo_start = 33000;
 	cis->need_mode_change = false;
+	cis->cis_data->cur_pattern_mode = SENSOR_TEST_PATTERN_MODE_OFF;
 
 	sensor_3l6_cis_data_calculation(sensor_3l6_pllinfos[setfile_index], cis->cis_data);
 
@@ -1803,6 +1804,7 @@ static struct is_cis_ops cis_ops_3l6 = {
 	.cis_check_rev_on_init = sensor_cis_check_rev_on_init,
 	.cis_set_initial_exposure = sensor_cis_set_initial_exposure,
 	.cis_recover_stream_on = sensor_3l6_cis_recover_stream_on, /* for ESD recovery */
+	.cis_set_test_pattern = sensor_cis_set_test_pattern,
 };
 
 static int cis_3l6_probe(struct i2c_client *client,

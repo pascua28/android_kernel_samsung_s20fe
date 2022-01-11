@@ -631,6 +631,7 @@ void dpu_update_mres_lcd_info(struct decon_device *decon,
 		return;
 	}
 
+	/* fps will be update at actual operation part */
 	/* backup current LCD resolution information to previous one */
 	ret = dpu_update_display_mode(decon, regs->mode_idx,
 			dsim->panel->lcd_info.vrr_mode);

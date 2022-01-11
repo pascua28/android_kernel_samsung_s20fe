@@ -164,8 +164,8 @@ static u8 r8s_acl_opr_table[ACL_OPR_MAX][1] = {
 	{ 0x01 }, /* ACL ON OPR_3 */
 	{ 0x01 }, /* ACL ON OPR_6 */
 	{ 0x01 }, /* ACL ON OPR_8 */
-	{ 0x02 }, /* ACL ON OPR_12 */
-	{ 0x02 }, /* ACL ON OPR_15 */
+	{ 0x03 }, /* ACL ON OPR_12 */
+	{ 0x03 }, /* ACL ON OPR_15 */
 };
 
 static u8 r8s_lpm_nit_table[4][1] = {
@@ -360,6 +360,7 @@ static DEFINE_VARIABLE_PACKET(r8s_lpm_nit, DSI_PKT_TYPE_WR, R8S_LPM_NIT, 0x00);
 static DEFINE_PANEL_MDELAY(r8s_wait_1msec, 1);
 static DEFINE_PANEL_MDELAY(r8s_wait_9msec, 9);
 #endif
+static DEFINE_PANEL_MDELAY(r8s_wait_10msec, 10);
 static DEFINE_PANEL_MDELAY(r8s_wait_30msec, 30);
 static DEFINE_PANEL_MDELAY(r8s_wait_17msec, 17);
 
@@ -401,7 +402,7 @@ static u8 R8S_ACL_SET[] = {
 static DECLARE_PKTUI(r8s_acl_set) = {
 	{ .offset = 1, .maptbl = &r8s_maptbl[ACL_FRAME_AVG_MAPTBL] },
 	{ .offset = 2, .maptbl = &r8s_maptbl[ACL_START_POINT_MAPTBL] },
-	{ .offset = 19, .maptbl = &r8s_maptbl[ACL_DIM_SPEED_MAPTBL] },
+	{ .offset = 17, .maptbl = &r8s_maptbl[ACL_DIM_SPEED_MAPTBL] },
 };
 static DEFINE_VARIABLE_PACKET(r8s_acl_set, DSI_PKT_TYPE_WR, R8S_ACL_SET, 0x3B3);
 
@@ -614,6 +615,7 @@ static struct seqinfo SEQINFO(r8s_res_init_seq);
 #endif
 
 static void *r8s_init_cmdtbl[] = {
+	&DLYINFO(r8s_wait_10msec),
 	&PKTINFO(r8s_sleep_out),
 	&DLYINFO(r8s_wait_30msec),
 

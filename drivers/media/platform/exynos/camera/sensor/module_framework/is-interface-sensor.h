@@ -358,6 +358,7 @@ typedef struct {
 	unsigned int cur_frame_us_time;
 	unsigned int cur_width;
 	unsigned int cur_height;
+	unsigned int cur_pattern_mode;
 	unsigned int pre_width;
 	unsigned int pre_height;
 
@@ -536,6 +537,7 @@ struct is_cis_ops {
 	int (*cis_set_ev_stat)(struct v4l2_subdev *subdev, struct sensor_imx_3hdr_ev_control ev_control);
 	int (*cis_set_totalgain)(struct v4l2_subdev *subdev, struct ae_param *target_exposure, struct ae_param *again, struct ae_param *dgain);
 	int (*cis_set_fake_retention)(struct v4l2_subdev *subdev, bool enable);
+	int (*cis_set_test_pattern)(struct v4l2_subdev *subdev, camera2_sensor_ctl_t *sensor_ctl);
 };
 
 struct is_sensor_ctl

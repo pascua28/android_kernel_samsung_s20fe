@@ -185,6 +185,7 @@ static int vts_platform_open(struct snd_pcm_substream *substream)
 
 	/* vts_try_request_firmware_interface(data->vts_data); */
 	pm_runtime_get_sync(dev);
+	vts_start_runtime_resume(dev, 0);
 	snd_soc_set_runtime_hwparams(substream, &vts_platform_hardware);
 	if (data->type == PLATFORM_VTS_NORMAL_RECORD) {
 		dev_info(dev, "%s VTS RECORD open --\n", __func__);
@@ -214,6 +215,7 @@ static int vts_platform_close(struct snd_pcm_substream *substream)
 		dev_warn(dev, "%s VTS SRAM is Used for CP call\n",
 					__func__);
 		pm_runtime_get_sync(dev);
+		vts_start_runtime_resume(dev, 0);
 		/* vts_try_request_firmware_interface(data->vts_data); */
 		return -EBUSY;
 	}

@@ -375,6 +375,7 @@ int sensor_2la_cis_init(struct v4l2_subdev *subdev)
 	cis->cis_data->low_expo_start = 33000;
 	cis->need_mode_change = false;
 	cis->long_term_mode.sen_strm_off_on_enable = false;
+	cis->cis_data->cur_pattern_mode = SENSOR_TEST_PATTERN_MODE_OFF;
 #ifdef USE_CAMERA_MIPI_CLOCK_VARIATION
 	cis->mipi_clock_index_cur = CAM_MIPI_NOT_INITIALIZED;
 	cis->mipi_clock_index_new = CAM_MIPI_NOT_INITIALIZED;
@@ -881,6 +882,65 @@ int sensor_2la_cis_stream_on(struct v4l2_subdev *subdev)
 	do_gettimeofday(&end);
 	dbg_sensor(1, "[%s] time %lu us\n", __func__, (end.tv_sec - st.tv_sec)*1000000 + (end.tv_usec - st.tv_usec));
 #endif
+
+p_err:
+	return ret;
+}
+
+int sensor_2la_cis_set_test_pattern(struct v4l2_subdev *subdev, camera2_sensor_ctl_t *sensor_ctl)
+{
+	int ret = 0;
+	struct is_cis *cis;
+	struct i2c_client *client;
+
+	cis = (struct is_cis *)v4l2_get_subdevdata(subdev);
+
+	WARN_ON(!cis);
+	WARN_ON(!cis->cis_data);
+
+	client = cis->client;
+	if (unlikely(!client)) {
+		err("client is NULL");
+		ret = -EINVAL;
+		goto p_err;
+	}
+
+	dbg_sensor(1, "[MOD:D:%d] %s, cur_pattern_mode(%d), testPatternMode(%d)\n", cis->id, __func__,
+			cis->cis_data->cur_pattern_mode, sensor_ctl->testPatternMode);
+
+	if (cis->cis_data->cur_pattern_mode != sensor_ctl->testPatternMode) {
+		if (sensor_ctl->testPatternMode == SENSOR_TEST_PATTERN_MODE_OFF) {
+			info("%s: set DEFAULT pattern! (testpatternmode : %d)\n", __func__, sensor_ctl->testPatternMode);
+
+			I2C_MUTEX_LOCK(cis->i2c_lock);
+			is_sensor_write16(client, 0x6226, 0x0000);
+			is_sensor_write16(client, 0xB004, 0x0000);
+			is_sensor_write16(client, 0x0600, 0x0000);
+			I2C_MUTEX_UNLOCK(cis->i2c_lock);
+
+			cis->cis_data->cur_pattern_mode = sensor_ctl->testPatternMode;
+		} else if (sensor_ctl->testPatternMode == SENSOR_TEST_PATTERN_MODE_BLACK) {
+			info("%s: set BLACK pattern! (testpatternmode :%d), Data : 0x(%x, %x, %x, %x)\n",
+				__func__, sensor_ctl->testPatternMode,
+				(unsigned short)sensor_ctl->testPatternData[0],
+				(unsigned short)sensor_ctl->testPatternData[1],
+				(unsigned short)sensor_ctl->testPatternData[2],
+				(unsigned short)sensor_ctl->testPatternData[3]);
+
+			I2C_MUTEX_LOCK(cis->i2c_lock);
+			is_sensor_write16(client, 0x6226, 0x0001);
+			is_sensor_write16(client, 0xB004, 0x0000);
+			is_sensor_write16(client, 0x0600, 0x0001);
+
+			is_sensor_write16(client, 0x0602, 0x0040);
+			is_sensor_write16(client, 0x0604, 0x0040);
+			is_sensor_write16(client, 0x0606, 0x0040);
+			is_sensor_write16(client, 0x0608, 0x0040);
+			I2C_MUTEX_UNLOCK(cis->i2c_lock);
+
+			cis->cis_data->cur_pattern_mode = sensor_ctl->testPatternMode;
+		}
+	}
 
 p_err:
 	return ret;
@@ -2238,6 +2298,7 @@ static struct is_cis_ops cis_ops_2la = {
 	.cis_wait_streamon = sensor_cis_wait_streamon,
 	.cis_data_calculation = sensor_2la_cis_data_calc,
 	.cis_set_long_term_exposure = sensor_2la_cis_long_term_exposure,
+	.cis_set_test_pattern = sensor_2la_cis_set_test_pattern,
 #ifdef USE_CAMERA_MIPI_CLOCK_VARIATION
 	.cis_update_mipi_info = sensor_2la_cis_update_mipi_info,
 	.cis_get_mipi_clock_string = sensor_2la_cis_get_mipi_clock_string,

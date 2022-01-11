@@ -29,13 +29,13 @@ static char key64[][MAX_ITEM_KEY_LEN] = {
 static char key256[][MAX_ITEM_KEY_LEN] = {
 	"KLG", "BUS", "PANIC", "PC", "LR",
 	"BUG", "ESR", "SMU", "FREQ", "ODR",
-	"AUD", "UNFZ", "UP", "DOWN",
+	"AUD", "UNFZ", "UP", "DOWN", "GPU",
 };
 
 static char key1024[][MAX_ITEM_KEY_LEN] = {
 	"CPU0", "CPU1", "CPU2", "CPU3", "CPU4",
 	"CPU5", "CPU6", "CPU7", "MFC", "STACK",
-	"FPMU", "REGS"
+	"FPMU", "REGS",
 };
 
 /* keys are grouped by sysfs node */
@@ -45,7 +45,7 @@ static char akeys[][MAX_ITEM_KEY_LEN] = {
 	"RSTCNT", "PINFO", "SMU", "BUS", "DPM",
 	"ETC", "ESR", "MER", "PCB", "SMD",
 	"CHI", "LPI", "CDI", "KLG", "PANIC",
-	"LEV", "DCN", "WAK", "BAT", "SMP",
+	"LEV", "DCN", "WAK", "BAT", "SMP", "GPU",
 };
 
 static char bkeys[][MAX_ITEM_KEY_LEN] = {

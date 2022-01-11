@@ -205,7 +205,8 @@ bool sec_bat_check_dc_step_charging(struct sec_battery_info *battery)
 		battery->current_event & SEC_BAT_CURRENT_EVENT_HV_DISABLE ||
 		((battery->current_event & SEC_BAT_CURRENT_EVENT_DC_ERR) &&
 		(battery->ta_alert_mode == OCP_NONE)) ||
-		battery->current_event & SEC_BAT_CURRENT_EVENT_SIOP_LIMIT) {
+		battery->current_event & SEC_BAT_CURRENT_EVENT_SIOP_LIMIT ||
+		battery->wc_tx_enable) {
 		if (battery->step_charging_status >= 0)
 			sec_bat_reset_step_charging(battery);
 		return false;
@@ -374,12 +375,8 @@ check_dc_step_change:
 		if (battery->dc_step_chg_type & STEP_CHARGING_CONDITION_INPUT_CURRENT) {
 			if (battery->step_charging_status < 0) {
 				pr_info("%s : step input current = %d \n", __func__, battery->pdata->dc_step_chg_val_iout[step] / 2);
-				val.intval = battery->pdata->dc_step_chg_val_iout[step] / 2;
-				psy_do_property(battery->pdata->charger_name, set,
-					POWER_SUPPLY_EXT_PROP_DIRECT_CURRENT_MAX, val);
-
 				/* updated charging current */
-				battery->charging_current = battery->pdata->dc_step_chg_val_iout[step];
+				sec_bat_refresh_charging_current(battery);
 			}
 		}
 		battery->step_charging_status = step;

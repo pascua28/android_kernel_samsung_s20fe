@@ -989,7 +989,7 @@ int pktproc_create(struct platform_device *pdev, struct mem_link_device *mld, u3
 			q->use_memcpy = 0;
 			q->stat.use_memcpy_cnt = 0;
 
-			q->q_info->num_desc = (data_size_by_q * ppa->desc_num_ratio_percent) / (q->manager->cell_size * 100);
+			q->q_info->num_desc = (data_size_by_q / q->manager->cell_size) * ppa->desc_num_ratio_percent / 100;
 
 			q->desc_sktbuf = ppa->desc_base +
 					(i * sizeof(struct pktproc_desc_sktbuf) * q->q_info->num_desc);

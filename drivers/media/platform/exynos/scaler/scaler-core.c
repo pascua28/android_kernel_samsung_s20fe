@@ -1433,10 +1433,15 @@ static int sc_v4l2_s_crop(struct file *file, void *fh,
 			w_align, &rect.height, limit->min_h,
 			limit->max_h, h_align, 0);
 
-	/* Bound an image to have crop position in limit */
-	v4l_bound_align_image(&rect.left, 0, frame->width - rect.width,
-			w_align, &rect.top, 0, frame->height - rect.height,
-			h_align, 0);
+	/* The crop position should be aligned in case of DST or YUYV format */
+	if (!V4L2_TYPE_IS_OUTPUT(cr->type) ||
+	    (frame->sc_fmt->pixelformat == V4L2_PIX_FMT_YUYV)) {
+		/* Bound an image to have crop position in limit */
+		v4l_bound_align_image(&rect.left, 0, frame->width - rect.width,
+				      w_align,
+				      &rect.top, 0, frame->height - rect.height,
+				      h_align, 0);
+	}
 
 	if (!V4L2_TYPE_IS_OUTPUT(cr->type) &&
 			sc_fmt_is_s10bit_yuv(frame->sc_fmt->pixelformat))

@@ -7602,7 +7602,7 @@
 		#address-cells = <0x02>;
 		#size-cells = <0x01>;
 		ranges;
-		list-scen = "default\0mfc_uhd\0mfc_uhd_10bit\0mfc_8k_dec30\0g3d_performance\0dp_default\0camera_default\0npu_normal\0mfc_uhd_enc60\0npu_performance";
+		list-scen = "default\0mfc_uhd\0mfc_uhd_10bit\0mfc_8k_dec30\0g3d_performance\0camera_default\0npu_normal\0dp_default\0mfc_uhd_enc60\0npu_performance";
 
 		bts_irp0 {
 			#address-cells = <0x02>;
@@ -7954,18 +7954,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x08>;
-				awqos = <0x08>;
-				rmo = <0x40>;
-				qurgent_on = <0x01>;
-				qurgent_th_r = <0x0c>;
-				qurgent_th_w = <0x06>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -7983,6 +7971,18 @@
 				awqos = <0x08>;
 				rmo = <0x20>;
 				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x08>;
+				awqos = <0x08>;
+				rmo = <0x40>;
+				qurgent_on = <0x01>;
+				qurgent_th_r = <0x0c>;
+				qurgent_th_w = <0x06>;
 				blocking_on = <0x00>;
 			};
 
@@ -8050,18 +8050,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x08>;
-				awqos = <0x08>;
-				rmo = <0x40>;
-				qurgent_on = <0x01>;
-				qurgent_th_r = <0x0c>;
-				qurgent_th_w = <0x06>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8079,6 +8067,18 @@
 				awqos = <0x08>;
 				rmo = <0x20>;
 				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x08>;
+				awqos = <0x08>;
+				rmo = <0x40>;
+				qurgent_on = <0x01>;
+				qurgent_th_r = <0x0c>;
+				qurgent_th_w = <0x06>;
 				blocking_on = <0x00>;
 			};
 
@@ -8145,19 +8145,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x08>;
-				awqos = <0x08>;
-				rmo = <0x40>;
-				wmo = <0x20>;
-				qurgent_on = <0x01>;
-				qurgent_th_r = <0x0c>;
-				qurgent_th_w = <0x06>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8177,6 +8164,19 @@
 				rmo = <0x20>;
 				wmo = <0x20>;
 				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x08>;
+				awqos = <0x08>;
+				rmo = <0x40>;
+				wmo = <0x20>;
+				qurgent_on = <0x01>;
+				qurgent_th_r = <0x0c>;
+				qurgent_th_w = <0x06>;
 				blocking_on = <0x00>;
 			};
 
@@ -8252,17 +8252,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x0b>;
-				wmo = <0x0b>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8275,6 +8264,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x14>;
+				wmo = <0x14>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8368,17 +8368,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x0b>;
-				wmo = <0x0b>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8391,6 +8380,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x14>;
+				wmo = <0x14>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8484,17 +8484,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x0b>;
-				wmo = <0x0b>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8507,6 +8496,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x14>;
+				wmo = <0x14>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8600,17 +8600,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x0b>;
-				wmo = <0x0b>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8623,6 +8612,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x14>;
+				wmo = <0x14>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8716,17 +8716,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x0b>;
-				wmo = <0x0b>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8739,6 +8728,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x14>;
+				wmo = <0x14>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8821,17 +8821,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x18>;
-				wmo = <0x14>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8844,6 +8833,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x08>;
+				wmo = <0x08>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -8915,17 +8915,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x18>;
-				wmo = <0x14>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -8938,6 +8927,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x08>;
+				wmo = <0x08>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -9009,17 +9009,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x18>;
-				wmo = <0x14>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -9032,6 +9021,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x08>;
+				wmo = <0x08>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -9114,17 +9114,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x20>;
-				wmo = <0x20>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -9137,6 +9126,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x10>;
+				wmo = <0x10>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -9219,17 +9219,6 @@
 				blocking_on = <0x00>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x04>;
-				awqos = <0x04>;
-				rmo = <0x20>;
-				wmo = <0x20>;
-				qurgent_on = <0x00>;
-				blocking_on = <0x00>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -9242,6 +9231,17 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x04>;
+				awqos = <0x04>;
+				rmo = <0x10>;
+				wmo = <0x10>;
+				qurgent_on = <0x00>;
+				blocking_on = <0x00>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x04>;
@@ -9418,15 +9418,6 @@
 				wmo = <0x20>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x00>;
-				awqos = <0x00>;
-				rmo = <0x04>;
-				wmo = <0x04>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -9437,6 +9428,15 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x00>;
+				awqos = <0x00>;
+				rmo = <0x04>;
+				wmo = <0x04>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x00>;
@@ -9497,15 +9497,6 @@
 				wmo = <0x20>;
 			};
 
-			dp_default {
-				stat_on = <0x01>;
-				bypass = <0x00>;
-				arqos = <0x00>;
-				awqos = <0x00>;
-				rmo = <0x04>;
-				wmo = <0x04>;
-			};
-
 			camera_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
@@ -9516,6 +9507,15 @@
 			};
 
 			npu_normal {
+				stat_on = <0x01>;
+				bypass = <0x00>;
+				arqos = <0x00>;
+				awqos = <0x00>;
+				rmo = <0x04>;
+				wmo = <0x04>;
+			};
+
+			dp_default {
 				stat_on = <0x01>;
 				bypass = <0x00>;
 				arqos = <0x00>;
@@ -13937,7 +13937,7 @@
 	};
 
 	chosen {
-		bootargs = "androidboot.hardware=exynos990 bcm_setup=0xffffff80f8e00000 firmware_class.path=/vendor/firmware reserve-fimc=0xffffff90f9fe0000 nohugeiomap epx_activate=true fpsimd_check_context=y rcupdate.rcu_expedited=1 corememsize=8G cgroup.memory=nokmem";
+		bootargs = "androidboot.hardware=exynos990 bcm_setup=0xffffff80f8e00000 firmware_class.path=/vendor/firmware reserve-fimc=0xffffff90f9fe0000 nohugeiomap epx_activate=true fpsimd_check_context=y rcupdate.rcu_expedited=1 corememsize=8G cgroup.memory=nokmem loop.max_part=7";
 		linux,initrd-start = <0x84000000>;
 		linux,initrd-end = <0x841fffff>;
 		phandle = <0x32c>;

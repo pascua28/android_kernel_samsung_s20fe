@@ -522,6 +522,7 @@ int sensor_imx616_cis_init(struct v4l2_subdev *subdev)
 	cis->cis_data->low_expo_start = 33000;
 	cis->need_mode_change = false;
 	cis->long_term_mode.sen_strm_off_on_step = 0;
+	cis->cis_data->cur_pattern_mode = SENSOR_TEST_PATTERN_MODE_OFF;
 
 	cis->cis_data->stream_on = false;
 
@@ -1083,6 +1084,60 @@ int sensor_imx616_cis_stream_on(struct v4l2_subdev *subdev)
 	dbg_sensor(1, "[%s] time %lu us\n", __func__, (end.tv_sec - st.tv_sec)*1000000 + (end.tv_usec - st.tv_usec));
 #endif
 
+	return ret;
+}
+
+int sensor_imx616_cis_set_test_pattern(struct v4l2_subdev *subdev, camera2_sensor_ctl_t *sensor_ctl)
+{
+	int ret = 0;
+	struct is_cis *cis;
+	struct i2c_client *client;
+
+	cis = (struct is_cis *)v4l2_get_subdevdata(subdev);
+
+	WARN_ON(!cis);
+	WARN_ON(!cis->cis_data);
+
+	client = cis->client;
+	if (unlikely(!client)) {
+		err("client is NULL");
+		ret = -EINVAL;
+		goto p_err;
+	}
+
+	dbg_sensor(1, "[MOD:D:%d] %s, cur_pattern_mode(%d), testPatternMode(%d)\n", cis->id, __func__,
+			cis->cis_data->cur_pattern_mode, sensor_ctl->testPatternMode);
+
+	if (cis->cis_data->cur_pattern_mode != sensor_ctl->testPatternMode) {
+		info("%s REG : 0xB000 write to 0x00", __func__);
+		is_sensor_write8(client, 0xB000, 0x00);
+
+		cis->cis_data->cur_pattern_mode = sensor_ctl->testPatternMode;
+		if (sensor_ctl->testPatternMode == SENSOR_TEST_PATTERN_MODE_OFF) {
+			info("%s: set DEFAULT pattern! (testpatternmode : %d)\n", __func__, sensor_ctl->testPatternMode);
+
+			I2C_MUTEX_LOCK(cis->i2c_lock);
+			is_sensor_write16(client, 0x0600, 0x0000);
+			I2C_MUTEX_UNLOCK(cis->i2c_lock);
+		} else if (sensor_ctl->testPatternMode == SENSOR_TEST_PATTERN_MODE_BLACK) {
+			info("%s: set BLACK pattern! (testpatternmode :%d), Data : 0x(%x, %x, %x, %x)\n",
+				__func__, sensor_ctl->testPatternMode,
+				(unsigned short)sensor_ctl->testPatternData[0],
+				(unsigned short)sensor_ctl->testPatternData[1],
+				(unsigned short)sensor_ctl->testPatternData[2],
+				(unsigned short)sensor_ctl->testPatternData[3]);
+
+			I2C_MUTEX_LOCK(cis->i2c_lock);
+			is_sensor_write16(client, 0x0600, 0x0001);
+			is_sensor_write16(client, 0x0602, 0x0040);
+			is_sensor_write16(client, 0x0604, 0x0040);
+			is_sensor_write16(client, 0x0606, 0x0040);
+			is_sensor_write16(client, 0x0608, 0x0040);
+			I2C_MUTEX_UNLOCK(cis->i2c_lock);
+		}
+	}
+
+p_err:
 	return ret;
 }
 
@@ -2808,6 +2863,7 @@ static struct is_cis_ops cis_ops_imx616 = {
 	.cis_data_calculation = sensor_imx616_cis_data_calc,
 	.cis_check_rev_on_init = sensor_imx616_cis_check_rev_on_init,
 	.cis_set_initial_exposure = sensor_cis_set_initial_exposure,
+	.cis_set_test_pattern = sensor_imx616_cis_set_test_pattern,
 #ifdef SUPPORT_SENSOR_SEAMLESS_3HDR
 	.cis_set_roi_stat = sensor_imx616_cis_set_roi_stat,
 	.cis_set_3hdr_stat = sensor_imx616_cis_set_3hdr_stat,

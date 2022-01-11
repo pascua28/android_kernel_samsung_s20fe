@@ -93,19 +93,6 @@ static inline int groups_search(const struct group_info *group_info, kgid_t grp)
 }
 #endif
 
-#ifdef CONFIG_KDP_CRED
-struct ro_rcu_head {
-	/* RCU deletion */
-	union {
-		int non_rcu;		/* Can we skip RCU deletion? */
-		struct rcu_head	rcu;	/* RCU deletion hook */
-	};
-	void *bp_cred;
-};
-#define get_rocred_rcu(cred) ((struct ro_rcu_head *)((atomic_t *)cred->use_cnt + 1))
-#define get_usecnt_rcu(use_cnt) ((struct ro_rcu_head *)((atomic_t *)use_cnt + 1))
-#endif
-
 /*
  * The security context of a task
  *

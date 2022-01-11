@@ -30,6 +30,22 @@ extern struct cred init_cred;
 extern struct task_security_struct init_sec;
 extern int security_integrity_current(void);
 
+struct ro_rcu_head {
+	/* RCU deletion */
+	union {
+		int non_rcu;		/* Can we skip RCU deletion? */
+		struct rcu_head	rcu;	/* RCU deletion hook */
+	};
+	void *bp_cred;
+};
+
+struct kdp_usecnt {
+	atomic_t kdp_use_cnt;
+	struct ro_rcu_head kdp_rcu_head;
+};
+#define get_rocred_rcu(cred) ((struct ro_rcu_head *)((atomic_t *)cred->use_cnt + 1))
+#define get_usecnt_rcu(use_cnt) ((struct ro_rcu_head *)((atomic_t *)use_cnt + 1))
+
 #ifdef CONFIG_KDP_NS
 void rkp_reset_mnt_flags(struct vfsmount *mnt,int flags);
 #endif

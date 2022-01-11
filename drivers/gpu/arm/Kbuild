@@ -16,4 +16,7 @@ ifeq ($(CONFIG_MALI_DDK_VERSION),y)
 		ifeq ($(CONFIG_MALI_VALHALL_R25P1),y)
 			obj-y += v_r25p1/
 		endif
+		ifeq ($(CONFIG_MALI_DDK_VALHALL_R32P1),y)
+			obj-$(CONFIG_MALI_MIDGARD) += bv_r32p1/
+		endif
 endif

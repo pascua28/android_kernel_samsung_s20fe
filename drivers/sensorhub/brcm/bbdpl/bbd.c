@@ -824,8 +824,8 @@ int get_patch(unsigned char **patch) {
 			*patch = bbd_patch_R;
 			return sizeof(bbd_patch_R);
 		default:
-			*patch = bbd_patch_Q;
-			return sizeof(bbd_patch_Q);
+			*patch = bbd_patch_R;
+			return sizeof(bbd_patch_R);
 	}
 }
 

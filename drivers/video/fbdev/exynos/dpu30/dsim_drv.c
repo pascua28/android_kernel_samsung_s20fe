@@ -707,9 +707,9 @@ int dsim_read_data(struct dsim_device *dsim, u32 id, u32 addr, u32 cnt, u8 *buf)
 		goto exit;
 	}
 	if (!ret) {
-		dsim_err("%s MIPI DSIM read Timeout!\n", __func__);
 		ret = dsim_reg_get_datalane_status(dsim->id);
-		if (ret == DSIM_DATALANE_STATUS_BTA) {
+		dsim_err("%s MIPI DSIM read Timeout!: %d\n", __func__, ret);
+		if ((ret == DSIM_DATALANE_STATUS_BTA) && (decon != NULL)) {
 			if (decon_reg_get_run_status(decon->id)) {
 				//dsim_reset_panel(dsim);
 				dpu_hw_recovery_process(decon);

@@ -25,27 +25,27 @@
 #define MAX_STR_LEN	160
 #define PROC_FILE_NAME	"dplog"
 #define LOG_PREFIX	"Displayport"
+#define PRINT_DATE_FREQ	20
 
 static char log_buf[BUF_SIZE];
 static unsigned int g_curpos;
 static int is_dp_logger_init;
 static int is_buf_full;
 static int log_max_count = -1;
+static unsigned int log_count = PRINT_DATE_FREQ;
 
 void dp_logger_print_date_time(void)
 {
 	char tmp[64] = {0x0, };
+	struct timespec ts;
 	struct tm tm;
-	u64 time;
-	unsigned long nsec;
 	unsigned long sec;
 
-	time = local_clock();
-	nsec = do_div(time, 1000000000);
-	sec = get_seconds() - (sys_tz.tz_minuteswest * 60);
-	time_to_tm(sec, 0, &tm);
-	snprintf(tmp, sizeof(tmp), "!@[%02d-%02d %02d:%02d:%02d.%03lu]", tm.tm_mon + 1, tm.tm_mday,
-						tm.tm_hour, tm.tm_min, tm.tm_sec, nsec / 1000000);
+	getnstimeofday(&ts);
+	sec = ts.tv_sec - (sys_tz.tz_minuteswest * 60);
+	time64_to_tm(sec, 0, &tm);
+	snprintf(tmp, sizeof(tmp), "@%02d-%02d %02d:%02d:%02d.%03lu", tm.tm_mon + 1, tm.tm_mday,
+				tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec / 1000000);
 
 	dp_logger_print("%s\n", tmp);
 }
@@ -56,6 +56,7 @@ void dp_logger_set_max_count(int count)
 	log_max_count = count;
 
 	dp_logger_print_date_time();
+	log_count = PRINT_DATE_FREQ;
 }
 
 void dp_logger_print(const char *fmt, ...)
@@ -75,13 +76,17 @@ void dp_logger_print(const char *fmt, ...)
 	else if (log_max_count > 0)
 		log_max_count--;
 
+	if (--log_count == 0) {
+		dp_logger_print_date_time();
+		log_count = PRINT_DATE_FREQ;
+	}
+
 	time = local_clock();
 	nsec = do_div(time, 1000000000);
 
 	len = snprintf(buf, sizeof(buf), "[%5lu.%06ld] ", (unsigned long)time, nsec / 1000);
 
 	va_start(args, fmt);
-
 	len += vsnprintf(buf + len, MAX_STR_LEN - len, fmt, args);
 	va_end(args);
 
@@ -100,7 +105,7 @@ void dp_logger_print(const char *fmt, ...)
 void dp_print_hex_dump(void *buf, void *pref, size_t size)
 {
 	uint8_t *ptr = buf;
-	uint32_t i;
+	size_t i;
 	char tmp[128] = {0x0, };
 	char *ptmp = tmp;
 	int len;
@@ -181,5 +186,3 @@ int dp_logger_init(void)
 
 	return 0;
 }
-
-

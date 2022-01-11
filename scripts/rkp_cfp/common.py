@@ -135,6 +135,7 @@ skip_blr=set([
     'sensor_module_init',
     #'fimc_is_itf_sensor_mode_wrap',
     'is_sensor_register_itf',
+    'internal_create_group',
     ])
 
 skip_magic=set([

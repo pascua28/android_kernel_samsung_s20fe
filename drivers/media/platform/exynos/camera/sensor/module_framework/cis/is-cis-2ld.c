@@ -573,6 +573,7 @@ int sensor_2ld_cis_init(struct v4l2_subdev *subdev)
 	cis->need_mode_change = false;
 	cis->long_term_mode.sen_strm_off_on_step = 0;
 	cis->long_term_mode.sen_strm_off_on_enable = false;
+	cis->cis_data->cur_pattern_mode = SENSOR_TEST_PATTERN_MODE_OFF;
 #ifdef USE_CAMERA_MIPI_CLOCK_VARIATION
 	cis->mipi_clock_index_cur = CAM_MIPI_NOT_INITIALIZED;
 	cis->mipi_clock_index_new = CAM_MIPI_NOT_INITIALIZED;
@@ -1399,6 +1400,8 @@ int sensor_2ld_cis_retention_crc_check(struct v4l2_subdev *subdev)
 
 	if (crc_check == 0x01) {
 		info("[%s] retention SRAM CRC check: pass!\n", __func__);
+		/* init pattern */
+		is_sensor_write16(cis->client, 0x0600, 0x0000);
 
 		ret = sensor_2ld_cis_set_global_setting_retention(subdev);
 		if (ret < 0) {
@@ -3980,6 +3983,7 @@ static struct is_cis_ops cis_ops_2ld = {
 	.cis_wait_streamon = sensor_cis_wait_streamon,
 	.cis_data_calculation = sensor_2ld_cis_data_calc,
 	.cis_set_long_term_exposure = sensor_2ld_cis_long_term_exposure,
+	.cis_set_test_pattern = sensor_cis_set_test_pattern,
 #ifdef USE_CAMERA_MIPI_CLOCK_VARIATION
 	.cis_update_mipi_info = sensor_2ld_cis_update_mipi_info,
 	.cis_get_mipi_clock_string = sensor_2ld_cis_get_mipi_clock_string,

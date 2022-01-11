@@ -626,6 +626,7 @@ struct decon_reg_data {
 #ifdef CONFIG_EXYNOS_SET_ACTIVE_WITH_EMPTY_WINDOW
 	u32 fps;
 #endif
+	unsigned long idx;
 };
 
 struct decon_win_config_extra {
@@ -766,6 +767,22 @@ typedef enum dpu_event_type {
 	DPU_EVT_MAX, /* End of EVENT */
 } dpu_event_t;
 
+/* Location of calling DPU_EVT_WIN_CONFIG & DPU_EVT_UPDATE_HANDLER */
+enum dpu_wc_id {
+	WC_ID_FAIL = BIT(0),
+	WC_ID_SKIP = BIT(1),
+	WC_ID_NORMAL = BIT(2),
+	WC_ID_FPS = BIT(3),
+};
+
+enum dpu_uh_id {
+	UH_ID_IFENCE_ERR = 0,
+	UH_ID_OFENCE_ERR,
+	UH_ID_DPP_ERR,
+	UH_ID_NORMAL,
+	UH_ID_LAST_REGS,
+};
+
 /* Related with Cursor */
 struct disp_log_cursor {
 	u32 xpos;
@@ -785,13 +802,22 @@ struct disp_log_pm {
 	ktime_t elapsed;	/* End time - Start time */
 };
 
+struct decon_win_rawdata {
+	u32 id;
+	unsigned long idx;
+	u32 fps;
+	u32 state;
+	struct decon_frame winup;
+};
+
 /* Related with S3CFB_WIN_CONFIG */
 struct decon_update_reg_data {
 	struct decon_window_regs 	win_regs[MAX_DECON_WIN];
 	struct decon_win_config 	win_config[MAX_DECON_WIN + 2];
 	struct decon_win_rect 		win;
+	struct decon_win_rawdata 	win_raw;
 #if defined(CONFIG_EXYNOS_COMMON_PANEL)
-	struct decon_rect up_region;
+	struct decon_rect		up_region;
 #endif
 };
 
@@ -860,6 +886,7 @@ struct dpu_log {
 		struct disp_log_winup winup;
 		struct disp_log_memmap memmap;
 		struct disp_log_rsc rsc;
+		struct decon_win_rawdata win_raw;
 	} data;
 };
 
@@ -881,7 +908,8 @@ typedef enum dpu_event_log_level_type {
 /* APIs below are used in the DECON/DSIM/DPP driver */
 #define DPU_EVENT_START() ktime_t start = ktime_get()
 void DPU_EVENT_LOG(dpu_event_t type, struct v4l2_subdev *sd, ktime_t time);
-void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs);
+void DPU_EVENT_LOG_WINCON(struct v4l2_subdev *sd, struct decon_reg_data *regs,
+		enum dpu_uh_id id);
 void DPU_EVENT_LOG_CMD(struct v4l2_subdev *sd, u32 cmd_id, unsigned long data, u32 size);
 void DPU_EVENT_LOG_CURSOR(struct v4l2_subdev *sd, struct decon_reg_data *regs); /* cursor async */
 void DPU_EVENT_LOG_UPDATE_REGION(struct v4l2_subdev *sd,
@@ -1362,7 +1390,9 @@ struct decon_device {
 	struct decon_fence fence;
 	struct decon_freq_hop freq_hop;
 	struct decon_readback readback;
+	struct decon_win_rawdata win_raw;
 
+	unsigned long wc_idx;
 	int frame_cnt;
 	ktime_t frame_time;
 	int frame_cnt_target;

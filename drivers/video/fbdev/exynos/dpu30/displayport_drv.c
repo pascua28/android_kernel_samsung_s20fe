@@ -3150,6 +3150,12 @@ static void displayport_aux_sel(struct displayport_device *displayport)
 
 static void displayport_check_adapter_type(struct displayport_device *displayport)
 {
+#ifdef FEATURE_DEX_ADAPTER_TWEAK
+	if (displayport->dex_skip_adapter_check) {
+		displayport->dex_adapter_type = DEX_WQHD_SUPPORT;
+		return;
+	}
+#endif
 	displayport->dex_adapter_type = DEX_FHD_SUPPORT;
 
 	if (displayport->ven_id != 0x04e8)
@@ -4007,14 +4013,15 @@ static ssize_t audio_test_store(struct class *dev,
 }
 static CLASS_ATTR_RW(audio_test);
 
-static u8 edid_test_buf[257]; /* 256 + 1, 1st index is block count */
+#define TEST_BUF_SIZE	512
+static u8 edid_test_buf[TEST_BUF_SIZE + 1]; /* 1st index is block count */
 static ssize_t edid_test_show(struct class *class,
 		struct class_attribute *attr, char *buf)
 {
 	ssize_t size;
 	int i;
 
-	if (edid_test_buf[0] != 1 && edid_test_buf[0] != 2)
+	if (edid_test_buf[0] < 1 || edid_test_buf[0] > 4)
 		return sprintf(buf, "invalid size test edid(%d)\n", edid_test_buf[0]);
 
 	size = sprintf(buf, "edid size: %d\n", edid_test_buf[0]);
@@ -4036,7 +4043,7 @@ static ssize_t edid_test_store(struct class *dev,
 	int edid_idx = 1, hex_cnt = 0, buf_idx = 0;
 	u8 hex = 0;
 	u8 temp;
-	int max_size = (256 * 6); /* including comma, space and prefix like ', 0xFF' */
+	int max_size = (TEST_BUF_SIZE * 6); /* including comma, space and prefix like ', 0xFF' */
 
 	edid_test_buf[0] = 0;
 
@@ -4044,7 +4051,8 @@ static ssize_t edid_test_store(struct class *dev,
 		pr_cont("EDID test: ");
 	for (i = 0; i < size && i < max_size; i++) {
 		temp = *(buf + buf_idx++);
-		if (temp == ',' || temp == ' ') { /* value is separated by comma or space */
+		/* value is separated by comma, space or line feed*/
+		if (temp == ',' || temp == ' ' || temp == '\x0A') {
 			if (hex_cnt != 0) {
 				if (displayport_log_level >= 7) {
 					pr_cont("%02X ", hex);
@@ -4064,7 +4072,7 @@ static ssize_t edid_test_store(struct class *dev,
 			hex_cnt = 0;
 			hex = 0;
 			continue;
-		} else if (!temp || temp == '\x0A') { /* EOL, line feed */
+		} else if (!temp || temp == '\0') { /* EOL */
 			if (displayport_log_level >= 7)
 				pr_cont("%02X ", hex);
 			displayport_info("parse end. edid cnt: %d\n", edid_idx);
@@ -4083,7 +4091,7 @@ static ssize_t edid_test_store(struct class *dev,
 			return size;
 		}
 
-		if (hex_cnt > 2 || edid_idx > 256) {
+		if (hex_cnt > 2 || edid_idx > TEST_BUF_SIZE + 1) {
 			displayport_info("wrong input. %d, %d, [%c]\n", hex_cnt, edid_idx, temp);
 			return size;
 		}
@@ -4092,7 +4100,7 @@ static ssize_t edid_test_store(struct class *dev,
 	if (hex_cnt > 0)
 		edid_test_buf[edid_idx] = hex;
 
-	if (edid_idx == 128 || edid_idx == 256)
+	if (edid_idx != 1 && edid_idx % 128 == 1)
 		edid_test_buf[0] = edid_idx / 128;
 
 	displayport_info("edid size = %d\n", edid_idx);
@@ -4359,8 +4367,8 @@ static int displayport_update_hmd_list(struct displayport_device *displayport, c
 		ret = -EPERM;
 		goto exit;
 	}
-	kstrtouint(tok, 10, &num_hmd);
-	if (num_hmd > MAX_NUM_HMD) {
+	ret = kstrtouint(tok, 10, &num_hmd);
+	if (ret || num_hmd > MAX_NUM_HMD) {
 		displayport_err("invalid list num %d\n", num_hmd);
 		num_hmd = 0;
 		ret = -EPERM;
@@ -4378,14 +4386,20 @@ static int displayport_update_hmd_list(struct displayport_device *displayport, c
 		tok  = strsep(&p, ",");
 		if (tok == NULL || *tok == 0xa/*LF*/)
 			break;
-		kstrtouint(tok, 16, &val);
+		if (kstrtouint(tok, 16, &val)) {
+			ret = -EPERM;
+			break;
+		}
 		displayport->hmd_list[j].ven_id = val;
 
 		/* PID */
 		tok  = strsep(&p, ",");
 		if (tok == NULL || *tok == 0xa/*LF*/)
 			break;
-		kstrtouint(tok, 16, &val);
+		if (kstrtouint(tok, 16, &val)) {
+			ret = -EPERM;
+			break;
+		}
 		displayport->hmd_list[j].prod_id = val;
 
 		displayport_info("HMD%02d: %s, 0x%04x, 0x%04x\n", j,
@@ -4406,6 +4420,45 @@ not_tag_exit:
 	mutex_unlock(&displayport->hmd_lock);
 
 	return ret;
+}
+#endif
+
+#ifdef FEATURE_DEX_ADAPTER_TWEAK
+#define DEX_ADATER_TWEAK_LEN	32
+#define DEX_TAG_ADAPTER_TWEAK "SkipAdapterCheck"
+static int displayport_dex_adapter_tweak(struct displayport_device *displayport, const char *buf, size_t size)
+{
+	char str[DEX_ADATER_TWEAK_LEN] = {0,};
+	char *p, *tok;
+
+	if (size >= DEX_ADATER_TWEAK_LEN)
+		return -EINVAL;
+
+	memcpy(str, buf, size);
+	p = str;
+
+	tok = strsep(&p, ",");
+	if (strncmp(DEX_TAG_ADAPTER_TWEAK, tok, strlen(DEX_TAG_ADAPTER_TWEAK))) {
+		return -EINVAL;
+	}
+
+	tok = strsep(&p, ",");
+	if (tok == NULL || *tok == 0xa/*LF*/) {
+		displayport_info("Dex adapter tweak - Invalid value\n");
+		return 0;
+	}
+
+	switch (*tok) {
+	case '0':
+		displayport->dex_skip_adapter_check = false;
+		break;
+	case '1':
+		displayport->dex_skip_adapter_check = true;
+		break;
+	}
+	displayport_info("%s(%c)\n", __func__, *tok);
+
+	return 0;
 }
 #endif
 
@@ -4454,6 +4507,11 @@ static ssize_t dex_store(struct class *dev,
 		return size;
 	else if (ret != -EINVAL) /* try to update HMD list but error*/
 		return ret;
+#endif
+
+#ifdef FEATURE_DEX_ADAPTER_TWEAK
+	if (!displayport_dex_adapter_tweak(displayport, buf, size))
+		return size;
 #endif
 
 	if (kstrtouint(buf, 10, &val)) {
@@ -4895,6 +4953,7 @@ static int displayport_probe(struct platform_device *pdev)
 		secdp_bigdata_init(dp_class);
 #endif
 #ifdef CONFIG_SEC_DISPLAYPORT_SELFTEST
+		displayport->hpd_changed = displayport_hpd_changed;
 		self_test_init(displayport, dp_class);
 #endif
 	}

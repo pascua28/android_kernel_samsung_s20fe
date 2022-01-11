@@ -123,6 +123,7 @@ extern void secdbg_exin_set_ufs_error(char *str);
 extern void secdbg_exin_set_zswap(char *str);
 extern void secdbg_exin_set_mfc_error(char *str);
 extern void secdbg_exin_set_aud(char *str);
+extern void secdbg_exin_set_gpuinfo(const char *str);
 extern void secdbg_exin_set_epd(char *str);
 extern void secdbg_exin_set_unfz(const char *tmp, int pid);
 extern char *secdbg_exin_get_unfz(void);
@@ -149,6 +150,7 @@ extern void secdbg_exin_set_slave_ocp(void);
 #define secdbg_exin_set_zswap(a)	do { } while (0)
 #define secdbg_exin_set_mfc_error(a)	do { } while (0)
 #define secdbg_exin_set_aud(a)		do { } while (0)
+#define secdbg_exin_set_gpuinfo(a)		do { } while (0)
 #define secdbg_exin_set_epd(a)		do { } while (0)
 #define secdbg_exin_set_unfz(a)		do { } while (0)
 #define secdbg_exin_get_unfz(a)		do { } while (0)

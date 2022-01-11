@@ -21,6 +21,7 @@
 #include <linux/cn_proc.h>
 #ifdef CONFIG_KDP_CRED
 #include <linux/slub_def.h>
+#include <linux/kdp.h>
 #endif
 
 #if 0
@@ -47,7 +48,11 @@ int rkp_cred_enable __kdp_ro = 0;
 static struct kmem_cache *cred_jar_ro;
 struct kmem_cache *tsec_jar;
 struct kmem_cache *usecnt_jar;
-atomic_t init_cred_use_cnt = ATOMIC_INIT(4);
+struct kdp_usecnt init_cred_use_cnt = {
+	.kdp_use_cnt = ATOMIC_INIT(4),
+	.kdp_rcu_head.non_rcu = 0,
+	.kdp_rcu_head.bp_cred = (void *)0,
+};
 
 unsigned int rkp_get_usecount(struct cred *cred)
 {
@@ -136,7 +141,7 @@ struct cred init_cred __kdp_ro = {
 	.user_ns		= &init_user_ns,
 	.group_info		= &init_groups,
 #ifdef CONFIG_KDP_CRED
-	.use_cnt		= &init_cred_use_cnt,
+	.use_cnt		= (atomic_t *)&init_cred_use_cnt,
 	.bp_task		= &init_task,
 	.bp_pgd			= (void *) 0,
 	.type			= 0,
@@ -958,7 +963,7 @@ void __init cred_init(void)
 			panic("Unable to create RO security cache\n");
 		}
 
-		usecnt_jar = kmem_cache_create("usecnt_jar", sizeof(atomic_t) + sizeof(struct ro_rcu_head),
+		usecnt_jar = kmem_cache_create("usecnt_jar", sizeof(struct kdp_usecnt),
 				0, SLAB_HWCACHE_ALIGN|SLAB_PANIC|SLAB_ACCOUNT, usecnt_ctor);
 		if(!usecnt_jar) {
 			panic("Unable to create use count jar\n");

@@ -382,6 +382,14 @@ static int cpuhp_control(bool enable)
  * #echo mask > /sys/power/cpuhp/set_online_cpu
  */
 #define STR_LEN 6
+static inline toupper(char ch)
+{
+	if ('a' <= ch && ch <= 'z')
+		ch += 'A' - 'a';
+
+	return ch;
+}
+
 static ssize_t show_set_online_cpu(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -398,27 +406,36 @@ static ssize_t store_set_online_cpu(struct kobject *kobj,
 		size_t count)
 {
 	struct cpumask online_cpus;
-	char str[STR_LEN];
+	char str[STR_LEN], re_str[STR_LEN];
+	unsigned int cpumask_value;
 	int input;
 
 	if (strlen(buf) >= STR_LEN)
 		return -EINVAL;
 
-	if (!sscanf(buf, "%s", str))
-		return -EINVAL;
-
-	if (kstrtoint(str, 0, &input))
-		return -EINVAL;
-
-	if (!(input & BIT_BOOT_CPU))
+	if (!sscanf(buf, "%5s", str))
 		return -EINVAL;
 
 	/* CPU0 must be on and input should be in range of nr_cpus */
 	if (input <= 0 || input > BIT_ALL_CPUS)
 		return -EINVAL;
 
-	snprintf(str, STR_LEN, "%x", input);
-	cpumask_parse(str, &online_cpus);
+	if (str[0] == '0' && toupper(str[1]) == 'X')
+		/* Move str pointer to remove "0x" */
+		cpumask_parse(str + 2, &online_cpus);
+	else {
+		if (kstrtoint(str, 0, &input))
+			return -EINVAL;
+
+		if (!(input & BIT_BOOT_CPU))
+			return -EINVAL;
+
+		if (!sscanf(str, "%d", &cpumask_value))
+			return -EINVAL;
+
+		snprintf(re_str, STR_LEN - 1, "%x", cpumask_value);
+		cpumask_parse(re_str, &online_cpus);
+	}
 
 	cpumask_copy(&cpuhp.sysfs_user.online_cpus, &online_cpus);
 	cpuhp_do();

@@ -1707,7 +1707,7 @@ static void ffs_data_clear(struct ffs_data *ffs)
 
 	ffs_closed(ffs);
 
-	BUG_ON(ffs->gadget);
+	WARN_ON(ffs->gadget);
 
 	if (ffs->epfiles)
 		ffs_epfiles_destroy(ffs->epfiles, ffs->eps_count);
@@ -2940,7 +2940,6 @@ static inline struct f_fs_opts *ffs_do_functionfs_bind(struct usb_function *f,
 	struct f_fs_opts *ffs_opts =
 		container_of(f->fi, struct f_fs_opts, func_inst);
 	int ret;
-	int retries = 100;
 
 	ENTER();
 
@@ -2951,20 +2950,14 @@ static inline struct f_fs_opts *ffs_do_functionfs_bind(struct usb_function *f,
 	 *
 	 * Configfs-enabled gadgets however do need ffs_dev_lock.
 	 */
-	do {
-		if (!ffs_opts->no_configfs)
-			ffs_dev_lock();
-		ret = ffs_opts->dev->desc_ready ? 0 : -ENODEV;
-		func->ffs = ffs_opts->dev->ffs_data;
-		if (!ffs_opts->no_configfs)
-			ffs_dev_unlock();
-		if (ret)
-			msleep(20);
-		else
-			break;
-	} while (--retries);
+	if (!ffs_opts->no_configfs)
+		ffs_dev_lock();
+	ret = ffs_opts->dev->desc_ready ? 0 : -ENODEV;
+	func->ffs = ffs_opts->dev->ffs_data;
+	if (!ffs_opts->no_configfs)
+		ffs_dev_unlock();
 
-	pr_info("ffs_do_functionfs_bind %d %d\n", ret, retries);
+	pr_info("ffs_do_functionfs_bind %d\n", ret);
 
 	if (ret)
 		return ERR_PTR(ret);
@@ -3519,6 +3512,9 @@ static void ffs_func_unbind(struct usb_configuration *c,
 static struct usb_function *ffs_alloc(struct usb_function_instance *fi)
 {
 	struct ffs_function *func;
+#ifdef CONFIG_USB_OLD_CONFIGFS
+	struct ffs_dev *dev;
+#endif
 
 	ENTER();
 
@@ -3527,7 +3523,8 @@ static struct usb_function *ffs_alloc(struct usb_function_instance *fi)
 		return ERR_PTR(-ENOMEM);
 
 #ifdef CONFIG_USB_OLD_CONFIGFS
-	func->function.name    = "adb";
+	dev = to_f_fs_opts(fi)->dev;
+	func->function.name    = dev->name;
 #else
 	func->function.name    = "Function FS Gadget";
 #endif

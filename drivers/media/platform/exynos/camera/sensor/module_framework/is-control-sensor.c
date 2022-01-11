@@ -427,6 +427,7 @@ int is_sensor_ctl_update_gains(struct is_device_sensor *device,
 	u32 sensitivity = 0;
 	camera2_sensor_ctl_t *sensor_ctrl = NULL;
 	camera2_sensor_uctl_t *sensor_uctrl = NULL;
+	u32 loop_cnt, i;
 
 	FIMC_BUG(!device);
 	FIMC_BUG(!module_ctl);
@@ -457,9 +458,10 @@ int is_sensor_ctl_update_gains(struct is_device_sensor *device,
 			err("[SSDRV] Invalid sensitivity\n");
 	}
 
+	loop_cnt = sensor_peri->cis.cis_data->num_of_frame * SENSOR_DM_UPDATE_MARGIN;
+
 	if (adj_again.val != 0 && adj_dgain.val != 0 && sensitivity != 0) {
 		sensor_peri->cis.cur_sensor_uctrl.sensitivity = sensitivity;
-		sensor_peri->cis.expecting_sensor_dm[dm_index[0]].sensitivity = sensitivity;
 
 		sensor_peri->cis.cur_sensor_uctrl.analogGain = adj_again.short_val;
 		sensor_peri->cis.cur_sensor_uctrl.digitalGain = adj_dgain.short_val;
@@ -470,38 +472,44 @@ int is_sensor_ctl_update_gains(struct is_device_sensor *device,
 		sensor_peri->cis.cur_sensor_uctrl.midAnalogGain = adj_again.middle_val;
 		sensor_peri->cis.cur_sensor_uctrl.midDigitalGain = adj_dgain.middle_val;
 
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].analogGain
-									= adj_again.short_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].digitalGain
-									= adj_dgain.short_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].longAnalogGain
-									= adj_again.long_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].longDigitalGain
-									= adj_dgain.long_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].shortAnalogGain
-									= adj_again.short_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].shortDigitalGain
-									= adj_dgain.short_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].midAnalogGain
-									= adj_again.middle_val;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].midDigitalGain
-									= adj_dgain.middle_val;
+		for (i = 0; i < loop_cnt; i++) {
+			sensor_peri->cis.expecting_sensor_dm[(dm_index[0] + i) % EXPECT_DM_NUM].sensitivity
+				= sensitivity;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].analogGain
+				= adj_again.short_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].digitalGain
+				= adj_dgain.short_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].longAnalogGain
+				= adj_again.long_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].longDigitalGain
+				= adj_dgain.long_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].shortAnalogGain
+				= adj_again.short_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].shortDigitalGain
+				= adj_dgain.short_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].midAnalogGain
+				= adj_again.middle_val;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].midDigitalGain
+				= adj_dgain.middle_val;
+		}
 	} else {
-		sensor_peri->cis.expecting_sensor_dm[dm_index[0]].sensitivity =
-			sensor_peri->cis.expecting_sensor_dm[dm_index[1]].sensitivity;
+		for (i = 0; i < loop_cnt; i++) {
+			sensor_peri->cis.expecting_sensor_dm[(dm_index[0] + i) % EXPECT_DM_NUM].sensitivity =
+				sensor_peri->cis.expecting_sensor_dm[dm_index[1]].sensitivity;
 
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].analogGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].analogGain;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].digitalGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].digitalGain;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].longAnalogGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].longAnalogGain;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].longDigitalGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].longDigitalGain;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].shortAnalogGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].shortAnalogGain;
-		sensor_peri->cis.expecting_sensor_udm[dm_index[0]].shortDigitalGain =
-			sensor_peri->cis.expecting_sensor_udm[dm_index[1]].shortDigitalGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].analogGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].analogGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].digitalGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].digitalGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].longAnalogGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].longAnalogGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].longDigitalGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].longDigitalGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].shortAnalogGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].shortAnalogGain;
+			sensor_peri->cis.expecting_sensor_udm[(dm_index[0] + i) % EXPECT_DM_NUM].shortDigitalGain =
+				sensor_peri->cis.expecting_sensor_udm[dm_index[1]].shortDigitalGain;
+		}
 	}
 p_err:
 	return ret;
@@ -626,7 +634,7 @@ int is_sensor_ctl_update_exposure(struct is_device_sensor *device,
 	FIMC_BUG(!module);
 	sensor_peri = (struct is_device_sensor_peri *)module->private_data;
 
-	loop_cnt = sensor_peri->cis.cis_data->num_of_frame;
+	loop_cnt = sensor_peri->cis.cis_data->num_of_frame * SENSOR_DM_UPDATE_MARGIN;
 
 	if (expo.long_val != 0 && expo.short_val != 0) {
 		sensor_peri->cis.cur_sensor_uctrl.exposureTime = is_sensor_convert_us_to_ns(expo.short_val);
@@ -805,6 +813,10 @@ void is_sensor_ctl_frame_evt(struct is_device_sensor *device)
 
 			module_ctl->update_wb_gains = false;
 		}
+
+		ret = is_sensor_peri_s_test_pattern(device, sensor_ctrl);
+		if (ret < 0)
+			err("[%s] frame number(%d) set test pattern fail\n", __func__, applied_frame_number);
 
 		if (module_ctl->update_3hdr_stat || module_ctl->update_roi ||
 			module_ctl->update_tone || module_ctl->update_ev) {

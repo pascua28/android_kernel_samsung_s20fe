@@ -2187,7 +2187,7 @@ void shmem_check_modem_binary_crc(struct link_device *ld)
 #endif
 
 int shm_get_security_param2(u32 cp_num, unsigned long mode, u32 bl_size,
-			    unsigned long *param)
+		unsigned long *param)
 {
 	int ret = 0;
 
@@ -2212,7 +2212,7 @@ int shm_get_security_param2(u32 cp_num, unsigned long mode, u32 bl_size,
 }
 
 int shm_get_security_param3(u32 cp_num, unsigned long mode, u32 main_size,
-			    unsigned long *param)
+		unsigned long *param)
 {
 	int ret = 0;
 

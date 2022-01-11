@@ -1980,6 +1980,7 @@ int tcs3407_stop(struct tcs3407_device_data *data)
 	if (data->regulator_state == 0) {
 		ALS_dbg("%s - already power off - disable skip\n",
 			__func__);
+		err = -1;
 		goto err_already_off;
 	} else if (data->regulator_state == 1) {
 		err = als_enable_set(data, AMSDRIVER_ALS_DISABLE);
@@ -3972,31 +3973,22 @@ static int tcs3407_suspend(struct device *dev)
 
 	ALS_dbg("%s - %d\n", __func__, data->regulator_state);
 
-	if (data->enabled != 0 ) {
-		do {
-			err = tcs3407_stop(data);
-			if (err < 0) {
-				break;
-			}
-			data->suspend_cnt++;
-		} while (data->enabled);
-		data->enabled = 1;
-	} else if (data->regulator_state != 0) {
-		ALS_dbg("%s - abnormal state! als not enabled", __func__);
-		do {
-			err = tcs3407_stop(data);
-			if (err < 0) {
-				break;
-			}
-		} while (data->regulator_state != 0);
-	}
 
+	while (data->regulator_state > 0) {
+		err = tcs3407_stop(data);
+		if (err < 0) {
+			ALS_dbg("%s - err in stop", __func__);
+			break;
+		}
+		data->suspend_cnt++;
+	}
 	mutex_lock(&data->suspendlock);
 
 	data->pm_state = PM_SUSPEND;
 	tcs3407_pin_control(data, false);
 
 	mutex_unlock(&data->suspendlock);
+	ALS_dbg("%s - suspend done", __func__);
 
 	return err;
 }
@@ -4011,18 +4003,20 @@ static int tcs3407_resume(struct device *dev)
 	mutex_lock(&data->suspendlock);
 
 	tcs3407_pin_control(data, true);
-
 	data->pm_state = PM_RESUME;
 
 	mutex_unlock(&data->suspendlock);
 
-	if (data->enabled != 0) {
-		do {
-			tcs3407_start(data);
-			data->suspend_cnt--;
-		} while(data->suspend_cnt > 0);
+	while (data->suspend_cnt) {
+	    err = tcs3407_start(data);
+	    if (err < 0) {
+		ALS_dbg("%s - err in start", __func__);
+		break;
+	    }
+	    data->suspend_cnt--;
 	}
 
+	ALS_dbg("%s - resume done", __func__);
 	return err;
 }
 

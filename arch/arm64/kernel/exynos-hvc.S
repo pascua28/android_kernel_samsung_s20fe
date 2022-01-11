@@ -19,7 +19,6 @@
  *			uint64_t arg4)
  */
 
-
 ENTRY(exynos_hvc)
 	dsb	sy
 	hvc	#0

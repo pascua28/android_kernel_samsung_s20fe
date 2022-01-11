@@ -48,10 +48,12 @@
 #include "secdp_unit_test.h"
 
 #define FEATURE_SUPPORT_DISPLAYID
+/*#define FEATURE_USE_PREFERRED_DISPLAYID*/
 #define DISPLAYID_EXT 0x70
 #define FEATURE_USE_PREFERRED_TIMING_1ST
 #define FEATURE_MANAGE_HMD_LIST
 /*#define FEATURE_IGNORE_PREFER_IF_DEX_RES_EXIST*/
+#define FEATURE_DEX_ADAPTER_TWEAK
 
 #define MST_MAX_VIDEO_FOR_DEX V2560X1600P60
 #define MST_MAX_VIDEO_FOR_MIRROR V4096X2160P30
@@ -89,7 +91,6 @@ extern int forced_resolution;
 
 #define displayport_dbg(fmt, ...)						\
 	do {									\
-		if (displayport_log_level >= 7)					\
 			pr_info("Displayport: " pr_fmt(fmt), ##__VA_ARGS__);			\
 	} while (0)
 
@@ -507,9 +508,11 @@ typedef enum {
 	V1920X1080P24,
 	V1920X1080P25,
 	V1920X1080P30,
+	V1600X900P60DTD,
 	V1600X900P59,
 	V1600X900P60RB,
 	V1920X1080P50,
+	V1920X1080P60DTD,
 	V1920X1080P60EXT,
 	V1920X1080P59,
 	V1920X1080P60,
@@ -519,6 +522,7 @@ typedef enum {
 	V2048X1536P60,
 	V1920X1440P60,
 	V2400X1200P90RELU,
+	V2560X1440P60DTD,
 	V2560X1440P60EXT,
 	V2560X1440P59,
 	V1440x2560P60,
@@ -536,11 +540,13 @@ typedef enum {
 	V4096X2160P24,
 	V4096X2160P25,
 	V4096X2160P30,
+	V3840X2160P50,
+	V3840X2160P60DTD,
 	V3840X2160P60EXT,
 	V3840X2160P59RB,
-	V3840X2160P50,
 	V3840X2160P60,
 	V4096X2160P50,
+	V4096X2160P60DTD,
 	V4096X2160P60,
 	V640X10P60SACRC,
 	VDUMMYTIMING,
@@ -794,6 +800,9 @@ struct displayport_device {
 	u8 dex_ver[2];
 	enum dex_support_type dex_adapter_type;
 	videoformat dex_video_pick;
+#ifdef FEATURE_DEX_ADAPTER_TWEAK
+	bool dex_skip_adapter_check;
+#endif
 
 #ifdef FEATURE_MANAGE_HMD_LIST
 	struct secdp_sink_dev hmd_list[MAX_NUM_HMD];  /*list of supported HMD device*/
@@ -809,6 +818,9 @@ struct displayport_device {
 	int do_unit_test;
 	enum wait_state dp_ready_wait_state;
 	wait_queue_head_t dp_ready_wait;
+#ifdef CONFIG_SEC_DISPLAYPORT_SELFTEST
+	void (*hpd_changed)(int);
+#endif
 };
 
 struct displayport_debug_param {
@@ -889,7 +901,7 @@ struct displayport_supported_preset {
 	char *name;
 	enum dex_support_type dex_support;
 	bool pro_audio_support;
-	u8 displayid_timing;
+	u8 timing_type;
 	bool edid_support_match;
 };
 
@@ -1032,6 +1044,31 @@ struct displayport_supported_preset {
 #define DISPLAYID_2400X1200P90_RELUMINO { \
 	.type = V4L2_DV_BT_656_1120, \
 	V4L2_INIT_BT_TIMINGS(2400, 1200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+}
+
+#define VIDEO_DTD_1600X900P60 { \
+	.type = V4L2_DV_BT_656_1120, \
+	V4L2_INIT_BT_TIMINGS(1600, 900, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+}
+
+#define VIDEO_DTD_1080P60 { \
+	.type = V4L2_DV_BT_656_1120, \
+	V4L2_INIT_BT_TIMINGS(1920, 1080, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+}
+
+#define VIDEO_DTD_1440P60 { \
+	.type = V4L2_DV_BT_656_1120, \
+	V4L2_INIT_BT_TIMINGS(2560, 1440, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+}
+
+#define VIDEO_DTD_3840X2160P60 { \
+	.type = V4L2_DV_BT_656_1120, \
+	V4L2_INIT_BT_TIMINGS(3840, 2160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+}
+
+#define VIDEO_DTD_4096X2160P60 { \
+	.type = V4L2_DV_BT_656_1120, \
+	V4L2_INIT_BT_TIMINGS(4096, 2160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
 }
 
 extern const int supported_videos_pre_cnt;
@@ -1385,7 +1422,7 @@ int displayport_reg_dpcd_read(u32 address, u32 length, u8 *data);
 int displayport_reg_dpcd_write_burst(u32 address, u32 length, u8 *data);
 int displayport_reg_dpcd_read_burst(u32 address, u32 length, u8 *data);
 int displayport_reg_edid_write(u8 edid_addr_offset, u32 length, u8 *data);
-int displayport_reg_edid_read(u8 edid_addr_offset, u32 length, u8 *data);
+int displayport_reg_edid_read(u8 block_cnt, u32 length, u8 *data);
 int displayport_reg_i2c_read(u32 address, u32 length, u8 *data);
 int displayport_reg_i2c_write(u32 address, u32 length, u8 *data);
 void displayport_reg_phy_reset(u32 en);

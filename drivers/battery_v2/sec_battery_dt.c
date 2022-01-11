@@ -1758,6 +1758,13 @@ int sec_bat_parse_dt(struct device *dev,
 		pdata->max_charging_charge_power = 25000;
 	}
 
+	ret = of_property_read_u32(np, "battery,apdo_max_volt",
+			&pdata->apdo_max_volt);
+	if (ret) {
+		pr_err("%s: apdo_max_volt is Empty\n", __func__);
+		pdata->apdo_max_volt = 11000; /* 11v */
+	}
+
 #if defined(CONFIG_BATTERY_CISD)
 	p = of_get_property(np, "battery,ignore_cisd_index", &len);
 	pdata->ignore_cisd_index = kzalloc(sizeof(*pdata->ignore_cisd_index) * 2, GFP_KERNEL);

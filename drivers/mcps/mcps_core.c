@@ -203,7 +203,8 @@ struct pending_queue *find_pendings(unsigned long data)
 
 /* __move_flow - move selected flow to selected core(to)
  */
-static int __move_flow(struct sauron *sauron, unsigned int to, struct eye *flow)
+__visible_for_testing
+int __move_flow(struct sauron *sauron, unsigned int to, struct eye *flow)
 {
 	sauron_lock(sauron);
 
@@ -533,7 +534,7 @@ __get_rand_cpu(struct rps_map *map, u32 hash) {
 	return -1;
 }
 
-static int
+__visible_for_testing int
 get_rand_cpu(struct arps_meta *arps, u32 hash, unsigned int cluster)
 {
 	int cpu = 0;

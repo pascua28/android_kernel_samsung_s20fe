@@ -618,7 +618,7 @@ void dpu_bts_update_bw(struct decon_device *decon, struct decon_reg_data *regs,
 
 #if defined(CONFIG_EXYNOS_DISPLAYPORT)
 		if ((displayport->sst[sst_id]->state == DISPLAYPORT_STATE_ON)
-			&& (pixelclock >= 533000000)) /* 4K DP case */
+			&& (pixelclock > 148500000)) /* 4K DP case */
 			return;
 #endif
 
@@ -641,7 +641,7 @@ void dpu_bts_update_bw(struct decon_device *decon, struct decon_reg_data *regs,
 
 #if defined(CONFIG_EXYNOS_DISPLAYPORT)
 		if ((displayport->sst[sst_id]->state == DISPLAYPORT_STATE_ON)
-			&& (pixelclock >= 533000000)) /* 4K DP case */
+			&& (pixelclock > 148500000)) /* 4K DP case */
 			return;
 #endif
 
@@ -738,9 +738,26 @@ void dpu_bts_acquire_bw(struct decon_device *decon)
 			DPU_ERR_BTS("%s int qos setting error\n", __func__);
 
 		bts_add_scenario(decon->bts.scen_idx[DPU_BS_DP_DEFAULT]);
+	} else if (pixelclock > 148500000) {
+		if (pm_qos_request_active(&decon->bts.mif_qos))
+			pm_qos_update_request(&decon->bts.mif_qos, 1794 * 1000);
+		else
+			DPU_ERR_BTS("%s mif qos setting error\n", __func__);
+
+		if (pm_qos_request_active(&decon->bts.int_qos))
+			pm_qos_update_request(&decon->bts.int_qos, 534 * 1000);
+		else
+			DPU_ERR_BTS("%s int qos setting error\n", __func__);
+
+		if (pm_qos_request_active(&decon->bts.disp_qos))
+			pm_qos_update_request(&decon->bts.disp_qos, 400 * 1000);
+		else
+			DPU_ERR_BTS("%s int qos setting error\n", __func__);
+
+		bts_add_scenario(decon->bts.scen_idx[DPU_BS_DP_DEFAULT]);
 	} else {
 		if (pm_qos_request_active(&decon->bts.mif_qos))
-			pm_qos_update_request(&decon->bts.mif_qos, 1352 * 1000);
+			pm_qos_update_request(&decon->bts.mif_qos, 845 * 1000);
 		else
 			DPU_ERR_BTS("%s mif qos setting error\n", __func__);
 	}

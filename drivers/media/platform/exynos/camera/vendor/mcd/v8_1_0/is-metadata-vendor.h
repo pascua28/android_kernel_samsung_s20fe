@@ -110,6 +110,7 @@ enum is_subscenario_id {
 	ISS_SUB_SCENARIO_VIDEO_3RD_PARTY_WDR_AUTO = 68,                             /* 68: 3rd Party Video (HDR Auto) */
 	ISS_SUB_SCENARIO_STILL_CAPTURE_3RD_PARTY_WDR_AUTO = 69,                     /* 69: 3rd Party Capture (HDR Auto) */
 	ISS_SUB_SCENARIO_FRONT_SMART_STAY = 70,                                     /* 70: Smart Stay */
+	ISS_SUB_SCENARIO_FRONT_3RD_PARTY_VT = 71,                                   /* 71: 3rd Party VT call (HDR Auto) */
 
 	ISS_SUB_SCENARIO_VIDEO_ISPLP_TNR = 110,                                     /* TODO: 110: ISPLT_TNR */
 	ISS_SUB_END,
@@ -302,6 +303,7 @@ enum sensor_test_pattern_mode {
 	SENSOR_TEST_PATTERN_MODE_COLOR_BARS,
 	SENSOR_TEST_PATTERN_MODE_COLOR_BARS_FADE_TO_GRAY,
 	SENSOR_TEST_PATTERN_MODE_PN9,
+	SENSOR_TEST_PATTERN_MODE_BLACK,
 	SENSOR_TEST_PATTERN_MODE_CUSTOM1 = 257,
 };
 
@@ -1259,6 +1261,7 @@ enum aa_dynamic_bds_mode {
 	AA_DYNAMIC_BDS_MODE_OFF = 0,
 	AA_DYNAMIC_BDS_MODE_LOW_LIGHT_ON = 1,   /* IQ controlled */
 	AA_DYNAMIC_BDS_MODE_SYSTEM_ON  = 2,     /* HAL controlled */
+	AA_DYNAMIC_BDS_MODE_VT_CALL_LOW_POWER  = 3,     /* HAL controlled */
 };
 
 enum aa_transient_capture_action {
@@ -2853,4 +2856,3 @@ typedef struct camera2_ccm_udm      camera2_ccm_udm_t;
 
 typedef struct camera2_me_udm camera2_me_udm_t;
 #endif
-

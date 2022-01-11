@@ -15,6 +15,7 @@
 #include <sound/memalloc.h>
 #include <linux/wakelock.h>
 
+#include "vts_shared_info.h"
 #define TEST_WAKEUP
 
 /* SYSREG_VTS */
@@ -122,6 +123,7 @@
 #define VTS_IRQ_AP_SET_REC_BUFFER       (25)
 #define VTS_IRQ_AP_START_REC            (26)
 #define VTS_IRQ_AP_STOP_REC             (27)
+#define VTS_IRQ_AP_GET_VERSION			(28)
 #define VTS_IRQ_AP_RESTART_RECOGNITION  (29)
 #define VTS_IRQ_AP_TEST_COMMAND         (31)
 
@@ -187,6 +189,7 @@
 /* DRAM for copying VTS firmware logs */
 #define LOG_BUFFER_BYTES_MAX	(0x2000)
 #define VTS_SRAMLOG_MSGS_OFFSET (0x59000)
+#define VTS_SRAMLOG_SIZE_MAX	(SZ_2K)		/* SZ_2K : 0x800 */
 
 /* VTS firmware version information offset */
 #if defined(CONFIG_SOC_EXYNOS9830)
@@ -206,6 +209,9 @@
 /* VTS Model Binary Max buffer sizes */
 #define VTS_MODEL_SVOICE_BIN_MAXSZ     (SOUND_MODEL_SVOICE_SIZE_MAX)
 #define VTS_MODEL_GOOGLE_BIN_MAXSZ     (SOUND_MODEL_GOOGLE_SIZE_MAX)
+
+#define VTS_ERR_HARD_FAULT	(0x1)
+#define VTS_ERR_BUS_FAULT	(0x3)
 
 enum ipc_state {
 	IDLE,
@@ -320,11 +326,6 @@ struct vts_dbg_dump {
 	char *sram_fw;
 };
 
-struct vts_log_buffer {
-	char *addr;
-	unsigned int size;
-};
-
 struct vts_data {
 	struct platform_device *pdev;
 	struct snd_soc_component *cmpnt;
@@ -349,6 +350,7 @@ struct vts_data {
 	const struct firmware *firmware;
 	unsigned int vtsdma_count;
 	unsigned long syssel_rate;
+	unsigned int target_sysclk;
 	unsigned long sysclk_rate;
 	struct platform_device *pdev_mailbox;
 	struct platform_device *pdev_vtsdma[2];
@@ -385,7 +387,8 @@ struct vts_data {
 	u32 running_ipc;
 	struct wake_lock wake_lock;
 	unsigned int vts_state;
-	u32 vtslog_enabled;
+	u32 fw_logfile_enabled;
+	u32 fw_logger_enabled;
 	bool audiodump_enabled;
 	bool logdump_enabled;
 	struct vts_model_bin_info svoice_info;
@@ -396,6 +399,8 @@ struct vts_data {
 	struct notifier_block modem_nb;
 	struct vts_dbg_dump p_dump[VTS_DUMP_LAST];
 	bool slif_dump_enabled;
+	int google_version;
+	struct vts_shared_info *shared_info;
 };
 
 struct vts_platform_data {
@@ -419,6 +424,6 @@ extern int vts_sound_machine_drv_register(void);
 extern void vts_pad_retention(bool retention);
 extern int cal_dll_apm_disable(void);
 extern int cal_dll_apm_enable(void);
-
+extern int vts_start_runtime_resume(struct device *dev, int skip_log);
 
 #endif /* __SND_SOC_VTS_H */

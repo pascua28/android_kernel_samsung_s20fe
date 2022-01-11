@@ -1595,6 +1595,7 @@ static int dwc3_gadget_ep_dequeue(struct usb_ep *ep,
 	}
 
 out1:
+	dwc3_gadget_ep_skip_trbs(dep, req);
 	dwc3_gadget_giveback(dep, req, -ECONNRESET);
 
 out0:
@@ -2242,9 +2243,6 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 	if(is_on)
 		set_usb_enable_state();
 #endif
-	if (pm_runtime_suspended(dwc->dev))
-		return 0;
-
 	is_on = !!is_on;
 
 	spin_lock_irqsave(&dwc->lock, flags);
@@ -2265,24 +2263,6 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 		/* Need to wait for vbus_session(on) from otg driver */
 		return 0;
 	}
-
-#ifdef CONFIG_USB_FIX_PHY_PULLUP_ISSUE
-	/* This W/A patch made for Lhotse H/W bugs.(Need to remove) */
-	if (is_on) {
-#ifdef CONFIG_USB_FIX_PHY_PULLUP_ISSUE
-		/* This W/A patch made for Lhotse H/W bugs.(Need to remove) */
-		/**
-		 * In case there is not a resistance to detect VBUS,
-		 * DP/DM controls by S/W are needed at this point.
-		 */
-		if (dwc->is_not_vbus_pad) {
-			phy_set(dwc->usb2_generic_phy, SET_DPPULLUP_DISABLE, NULL);
-			phy_set(dwc->usb3_generic_phy, SET_DPPULLUP_DISABLE, NULL);
-		}
-#endif
-		dwc->max_cnt_link_info = DWC3_LINK_STATE_INFO_LIMIT;
-	}
-#endif
 
 	if (dwc->is_not_vbus_pad) {
 		if (is_on) {

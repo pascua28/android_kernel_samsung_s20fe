@@ -319,6 +319,6 @@ static inline void update_cont_avg(struct rq *rq, struct task_struct *prev, stru
 extern int esg_get_migov_boost(int cpu);
 extern void esg_set_migov_boost(int cpu, int boost);
 #else
-static inline void esg_get_migov_boost(int cpu) { return 0; };
-static inline int esg_set_migov_boost(int cpu, int boost) { };
+static inline int esg_get_migov_boost(int cpu) { return 0; };
+static inline void esg_set_migov_boost(int cpu, int boost) { };
 #endif

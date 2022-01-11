@@ -31,6 +31,7 @@ static const struct firmware *abox_tplg_fw;
 static LIST_HEAD(widget_list);
 static LIST_HEAD(kcontrol_list);
 static LIST_HEAD(dai_list);
+static DEFINE_MUTEX(kcontrol_mutex);
 
 struct abox_tplg_widget_data {
 	struct list_head list;
@@ -230,7 +231,7 @@ static int abox_tplg_ipc_get(struct device *dev, int gid, int id)
 static int abox_tplg_ipc_get_complete(int gid, int id, unsigned int *value)
 {
 	struct abox_tplg_kcontrol_data *kdata;
-	int i;
+	int i, ret = -EINVAL;
 
 	list_for_each_entry(kdata, &kcontrol_list, list) {
 		if (kdata->gid == gid && kdata->id == id) {
@@ -242,11 +243,12 @@ static int abox_tplg_ipc_get_complete(int gid, int id, unsigned int *value)
 				kdata->value[i] = value[i];
 			}
 			complete(&report_control_completion);
-			return 0;
+			ret = 0;
+			break;
 		}
 	}
 
-	return -EINVAL;
+	return ret;
 }
 
 static int abox_tplg_ipc_put(struct device *dev, int gid, int id,
@@ -905,7 +907,9 @@ static int abox_tplg_control_load_enum(struct snd_soc_component *cmpnt,
 	kdata->kcontrol_new = kctl;
 	kdata->tplg_ec = tplg_ec;
 	se->dobj.private = kdata;
+	mutex_lock(&kcontrol_mutex);
 	list_add_tail(&kdata->list, &kcontrol_list);
+	mutex_unlock(&kcontrol_mutex);
 
 	return 0;
 }
@@ -954,7 +958,9 @@ static int abox_tplg_control_load_mixer(struct snd_soc_component *cmpnt,
 	kdata->kcontrol_new = kctl;
 	kdata->tplg_mc = tplg_mc;
 	mc->dobj.private = kdata;
+	mutex_lock(&kcontrol_mutex);
 	list_add_tail(&kdata->list, &kcontrol_list);
+	mutex_unlock(&kcontrol_mutex);
 
 	return 0;
 }
@@ -1285,6 +1291,7 @@ int abox_tplg_restore(struct device *dev)
 
 	dev_dbg(dev, "%s\n", __func__);
 
+	mutex_lock(&kcontrol_mutex);
 	list_for_each_entry(kdata, &kcontrol_list, list) {
 		switch (kdata->hdr->ops.info) {
 		case SND_SOC_TPLG_CTL_ENUM:
@@ -1311,6 +1318,7 @@ int abox_tplg_restore(struct device *dev)
 			break;
 		}
 	}
+	mutex_unlock(&kcontrol_mutex);
 
 	return 0;
 }

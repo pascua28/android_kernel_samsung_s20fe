@@ -567,6 +567,7 @@ static inline void set_skb_priv(struct sbd_ring_buffer *rb, struct sk_buff *skb)
 	/* Record the IO device, the link device, etc. into &skb->cb */
 	if (sipc_ps_ch(rb->ch)) {
 		unsigned int ch = (rb->buff_len_array[out] >> 16) & 0xff;
+
 		skbpriv(skb)->iod = link_get_iod_with_channel(rb->ld, ch);
 		skbpriv(skb)->ld = rb->ld;
 		skbpriv(skb)->sipc_ch = ch;
