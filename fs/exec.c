@@ -1322,6 +1322,7 @@ void __set_task_comm(struct task_struct *tsk, const char *buf, bool exec)
 
 	perf_event_comm(tsk, exec);
 }
+#if 0
 #ifdef CONFIG_KDP_NS
 /* pointer to superblock */
 extern struct super_block *sys_sb;
@@ -1359,6 +1360,7 @@ static int kdp_check_path_mismatch(struct vfsmount *vfsmnt)
 		"/com.android.conscrypt",
 		"/com.android.art",
 		"/com.android.adbd",
+		"/com.android.sdkext",
 	};
 
 	if (!vfsmnt->bp_mount) {
@@ -1431,6 +1433,7 @@ static int is_kdp_priv_task(void)
 	return 0;
 }
 #endif
+#endif
 
 /*
  * Calling this is the point of no return. None of the failures will be
@@ -1464,11 +1467,13 @@ int flush_old_exec(struct linux_binprm * bprm)
 	 */
 	acct_arg_size(bprm, 0);
 #ifdef CONFIG_KDP_NS
+	/*
 	if(rkp_cred_enable &&
 		is_kdp_priv_task() && 
 		invalid_drive(bprm)) {
 		panic("\n KDP_NS: Illegal Execution of file #%s#\n", bprm->filename);
 	}
+	*/
 #endif 
 	retval = exec_mmap(bprm->mm);
 	if (retval)
