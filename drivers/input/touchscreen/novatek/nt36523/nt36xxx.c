@@ -856,14 +856,13 @@ void nvt_ts_release_all_finger(struct nvt_ts_data *ts)
 		if (ts->coords[i].p_press) {
 			ts->touch_count--;
 
-#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#if 0
 			input_info(true, &ts->client->dev,
 				"[RA] tId:%d loc:%s dd:%d,%d mc:%d tc:%d lx:%d ly:%d\n",
 				i, location, ts->coords[i].p_x - ts->coords[i].x,
 				ts->coords[i].p_y - ts->coords[i].y,
 				ts->coords[i].move_count, ts->touch_count,
 				ts->coords[i].x, ts->coords[i].y);
-#else
 			input_info(true, &ts->client->dev,
 				"[RA] tId:%d loc:%s dd:%d,%d mc:%d tc:%d\n",
 				i, location, ts->coords[i].p_x - ts->coords[i].x,
@@ -898,14 +897,13 @@ static void nvt_ts_print_coord(struct nvt_ts_data *ts)
 			ts->touch_count++;
 			ts->all_finger_count++;
 
-#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#if 0
 			input_info(true, &ts->client->dev,
 				"[P] tId:%d.%d x:%d y:%d p:%d major:%d minor:%d loc:%s tc:%d type:%X\n",
 				i, (ts->input_dev->mt->trkid - 1) & TRKID_MAX,
 				ts->coords[i].x, ts->coords[i].y, ts->coords[i].palm,
 				ts->coords[i].w_major, ts->coords[i].w_minor,
 				location, ts->touch_count, ts->coords[i].status);
-#else
 			input_info(true, &ts->client->dev,
 				"[P] tId:%d.%d p:%d major:%d minor:%d loc:%s tc:%d type:%X\n",
 				i, (ts->input_dev->mt->trkid - 1) & TRKID_MAX, ts->coords[i].palm,
@@ -925,14 +923,13 @@ static void nvt_ts_print_coord(struct nvt_ts_data *ts)
 			if (!ts->touch_count)
 				ts->print_info_cnt_release = 0;
 
-#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#if 0
 			input_info(true, &ts->client->dev,
 				"[R] tId:%d loc:%s dd:%d,%d mc:%d tc:%d lx:%d ly:%d\n",
 				i, location, ts->coords[i].p_x - ts->coords[i].x,
 				ts->coords[i].p_y - ts->coords[i].y,
 				ts->coords[i].move_count, ts->touch_count,
 				ts->coords[i].x, ts->coords[i].y);
-#else
 			input_info(true, &ts->client->dev,
 				"[R] tId:%d loc:%s dd:%d,%d mc:%d tc:%d\n",
 				i, location, ts->coords[i].p_x - ts->coords[i].x,
@@ -942,13 +939,12 @@ static void nvt_ts_print_coord(struct nvt_ts_data *ts)
 			ts->coords[i].p_press = false;
 		} else if (ts->coords[i].press) {
 			if (ts->coords[i].p_status && (ts->coords[i].status != ts->coords[i].p_status)) {
-#if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
+#if 0
 				input_info(true, &ts->client->dev,
 					"[C] tId:%d x:%d y:%d p:%d major:%d minor:%d tc:%d type:%X\n",
 					i, ts->coords[i].x, ts->coords[i].y, ts->coords[i].palm,
 					ts->coords[i].w_major, ts->coords[i].w_minor,
 					ts->touch_count, ts->coords[i].status);
-#else
 				input_info(true, &ts->client->dev,
 					"[C] tId:%d p:%d major:%d minor:%d tc:%d type:%X\n",
 					i, ts->coords[i].palm, ts->coords[i].w_major, ts->coords[i].w_minor,
