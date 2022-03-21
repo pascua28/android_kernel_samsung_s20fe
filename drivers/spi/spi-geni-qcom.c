@@ -1834,7 +1834,6 @@ exit_rt_suspend:
 static int spi_geni_runtime_resume(struct device *dev)
 {
 	int ret = 0;
-#if 0
 	struct spi_master *spi = get_spi_master(dev);
 	struct spi_geni_master *geni_mas = spi_master_get_devdata(spi);
 
@@ -1883,10 +1882,6 @@ static int spi_geni_suspend(struct device *dev)
 			ret = -EBUSY;
 		}
 	}
-#else
-	if (!pm_runtime_status_suspended(dev))
-		ret = -EBUSY;
-#endif
 	return ret;
 }
 #else
