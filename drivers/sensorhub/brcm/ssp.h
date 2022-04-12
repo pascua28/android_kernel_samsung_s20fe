@@ -148,6 +148,7 @@
 #define SSP_FSM_SETTING_PATH		"/efs/FactoryApp/fsm_setting.txt"
 
 #define SSP_SENSOR_CAL_READ		"SSP:SENSOR_CAL_READ"
+#define SSP_AUTO_ROTATION_ORIENTATION "SSP:AUTO_ROTATION_ORIENTATION="
 
 #if 0 //def	CONFIG_SENSORS_SSP_PROX_AUTOCAL_AMS 
 #define CONFIG_SENSORS_SSP_PROX_ADC_CAL
@@ -328,6 +329,7 @@ enum {
 #define MSG2SSP_GET_LIGHT_TEST		0x93
 #define MSG2SSP_GET_COPR_ROIX		0x95
 #define MSG2SSP_HALL_IC_ON_OFF		0x96
+#define MSG2SSP_AUTO_ROTATION_ORIENTATION 0x9A
 /* voice data */
 #define TYPE_WAKE_UP_VOICE_SERVICE			0x01
 #define TYPE_WAKE_UP_VOICE_SOUND_SOURCE_AM		0x01
@@ -643,6 +645,7 @@ struct sensor_value {
 		u8 led_cover_event;
 		u8 tap_tracker_event;
 		u8 shake_tracker_event;
+		u8 auto_rotation_event;
 		u8 scontext_buf[SCONTEXT_DATA_SIZE];
 		struct {
 			u8 proximity_pocket_detect;
@@ -1245,6 +1248,7 @@ void report_pocket_mode_data(struct ssp_data *data, int sensor_type, struct sens
 void report_led_cover_event_data(struct ssp_data *data, int sensor_type, struct sensor_value *led_cover_event_data);
 void report_tap_tracker_data(struct ssp_data *data, int sensor_type, struct sensor_value *tap_tracker_data);
 void report_shake_tracker_data(struct ssp_data *data, int sensor_type, struct sensor_value *shake_tracker_data);
+void report_auto_rotation_data(struct ssp_data *data, int sensor_type, struct sensor_value *auto_rotation_data);
 
 unsigned int get_module_rev(struct ssp_data *data);
 void reset_mcu(struct ssp_data *data);

@@ -225,6 +225,6 @@ config EXYNOS_SOC_NAME
 
 config MALI_EXYNOS_UNIT_TESTS
     bool "Build unit tests for Mali Unified Driver vendor code"
-    default y
+    default n
     help
       Choose this option to build unit tests for Mali LSI vendor code
