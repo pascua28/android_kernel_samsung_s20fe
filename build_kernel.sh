@@ -1,10 +1,19 @@
 #!/bin/bash
 
+sudo apt-get install git ccache automake lzop bison gperf build-essential zip curl zlib1g-dev zlib1g-dev:i386 g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng
+
+sudo apt-get install gcc-aarch64-linux-gnu
+
+sudo apt-get install clang
+
+sudo apt-get install clang-12
+
+
 export ARCH=arm64
 mkdir out
 
 BUILD_CROSS_COMPILE=aarch64-linux-gnu-
-KERNEL_LLVM_BIN=/home/chanz/your_toolchain_patch/bin/clang
+KERNEL_LLVM_BIN=clang-12
 CLANG_TRIPLE=aarch64-linux-gnu-
 KERNEL_MAKE_ENV="DTC_EXT=$(pwd)/tools/dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y"
 
