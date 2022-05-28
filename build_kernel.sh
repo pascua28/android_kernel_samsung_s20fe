@@ -4,7 +4,7 @@ export ARCH=arm64
 mkdir out
 
 BUILD_CROSS_COMPILE=aarch64-linux-gnu-
-KERNEL_LLVM_BIN=/home/chanz/clang-14.0.7/clang-r445002/bin/clang
+KERNEL_LLVM_BIN=/home/chanz/your_toolchain_patch/bin/clang
 CLANG_TRIPLE=aarch64-linux-gnu-
 KERNEL_MAKE_ENV="DTC_EXT=$(pwd)/tools/dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y"
 
