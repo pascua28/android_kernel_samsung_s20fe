@@ -14,6 +14,12 @@ echo "(1) 4G Variant"
 echo "(2) 5G Variant"
 read -p "Selected variant: " variant
 
+chmod +x scripts/clang-android.sh
+chmod +x scripts/gcc-plugin.sh
+chmod +x scripts/gcc-version.sh
+chmod +x scripts/clang-version.sh
+chmod +x scripts/crypto/fips_crypto_integrity.py
+
 make -j8 -C $(pwd) O=$(pwd)/out $KERNEL_MAKE_ENV ARCH=arm64 CROSS_COMPILE=$BUILD_CROSS_COMPILE CC=$KERNEL_LLVM_BIN CLANG_TRIPLE=$CLANG_TRIPLE r8q_defconfig
 
 if [ $variant == "1" ]; then
