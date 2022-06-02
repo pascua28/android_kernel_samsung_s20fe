@@ -460,13 +460,6 @@ CONFIG_SETEND_EMULATION=y
 # CONFIG_UH_LKM_BLOCK is not set
 
 #
-# Control Flow Protection
-#
-# CONFIG_CFP is not set
-# CONFIG_CFP_JOPP is not set
-# CONFIG_CFP_ROPP is not set
-
-#
 # ARMv8.1 architectural features
 #
 CONFIG_ARM64_HW_AFDBM=y
@@ -6077,7 +6070,6 @@ CONFIG_SENSORS_GW9558X=y
 # samsung Performace manager
 #
 CONFIG_PERF_MGR=y
-# CONFIG_KPERFMON is not set
 CONFIG_TZIC=y
 CONFIG_TZIC_USE_QSEECOM=y
 # CONFIG_TZIC_DEFAULT is not set
@@ -6804,7 +6796,6 @@ CONFIG_DEBUG_BUGVERBOSE=y
 # CONFIG_RCU_PERF_TEST is not set
 # CONFIG_RCU_TORTURE_TEST is not set
 CONFIG_RCU_CPU_STALL_TIMEOUT=21
-CONFIG_RCU_PANIC_ON_STALL=0
 # CONFIG_RCU_TRACE is not set
 # CONFIG_RCU_EQS_DEBUG is not set
 # CONFIG_DEBUG_WQ_FORCE_RR_CPU is not set
