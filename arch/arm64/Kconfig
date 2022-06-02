@@ -1242,6 +1242,72 @@ config UH_LKM_BLOCK
 	help
 	  LKM is not allowed by Samsung security policy.
 
+menu "Control Flow Protection"
+
+config CFP
+	bool "JOPP and ROPP"
+	default n
+	help
+	  Control flow protection, including both JOPP and ROPP. Please do NOT
+	  set this CONFIG, JOPP/ROPP will select it.
+
+config CFP_JOPP
+	bool "JOP Prevention"
+	depends on !SEC_FACTORY 
+	select CFP
+	default n
+	help
+	  Restrict function pointer jumps to function entry points only.
+
+config CFP_JOPP_MAGIC
+	hex
+	depends on CFP_JOPP
+	default "0x00be7bad"
+
+config CFP_ROPP
+	bool "ROP Prevention"
+	depends on !SEC_FACTORY 
+	select CFP
+	default n
+	help
+	  Return address protection.
+
+choice
+	prompt "ROPP key"
+	default CFP_ROPP_SYSREGKEY
+	depends on CFP_ROPP
+
+config CFP_ROPP_SYSREGKEY
+	bool "Use system register"
+	help
+	  Master key held by system register.
+
+config CFP_ROPP_RANDKEY
+	bool "random key"
+	help
+	  For test, no master key, per-thread-key is random.
+
+config CFP_ROPP_FIXKEY
+	bool "fixed key"
+	help
+	  For test, no master key, per-thread-key is fixed.
+
+config CFP_ROPP_ZEROKEY
+	bool "zero key"
+	help
+	  For test, no master key, per-thread-key is zero.
+
+endchoice
+
+config CFP_TEST
+	bool "test file, only include in ENG build"
+	depends on CFP
+	default n
+	help
+	  For test only.
+
+endmenu
+
 menu "ARMv8.1 architectural features"
 
 config ARM64_HW_AFDBM
