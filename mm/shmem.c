@@ -2149,11 +2149,7 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
 	struct shmem_inode_info *info = SHMEM_I(inode);
 	int retval = -ENOMEM;
 
-	/*
-	 * What serializes the accesses to info->flags?
-	 * ipc_lock_object() when called from shmctl_do_lock(),
-	 * no serialization needed when called from shm_destroy().
-	 */
+	spin_lock_irq(&info->lock);
 	if (lock && !(info->flags & VM_LOCKED)) {
 		if (!user_shm_lock(inode->i_size, user))
 			goto out_nomem;
@@ -2168,6 +2164,7 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
 	retval = 0;
 
 out_nomem:
+	spin_unlock_irq(&info->lock);
 	return retval;
 }
 
@@ -2289,18 +2286,8 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
 	pgoff_t offset, max_off;
 
 	ret = -ENOMEM;
-	if (!shmem_inode_acct_block(inode, 1)) {
-		/*
-		 * We may have got a page, returned -ENOENT triggering a retry,
-		 * and now we find ourselves with -ENOMEM. Release the page, to
-		 * avoid a BUG_ON in our caller.
-		 */
-		if (unlikely(*pagep)) {
-			put_page(*pagep);
-			*pagep = NULL;
-		}
+	if (!shmem_inode_acct_block(inode, 1))
 		goto out;
-	}
 
 	if (!*pagep) {
 		page = shmem_alloc_page(gfp, info, pgoff);
@@ -2381,11 +2368,11 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
 
 	lru_cache_add_anon(page);
 
-	spin_lock_irq(&info->lock);
+	spin_lock(&info->lock);
 	info->alloced++;
 	inode->i_blocks += BLOCKS_PER_PAGE;
 	shmem_recalc_inode(inode);
-	spin_unlock_irq(&info->lock);
+	spin_unlock(&info->lock);
 
 	inc_mm_counter(dst_mm, mm_counter_file(page));
 	page_add_file_rmap(page, false);

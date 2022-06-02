@@ -915,8 +915,7 @@ static long zcrypt_unlocked_ioctl(struct file *filp, unsigned int cmd,
 		if (!reqcnt)
 			return -ENOMEM;
 		zcrypt_perdev_reqcnt(reqcnt, AP_DEVICES);
-		if (copy_to_user((int __user *) arg, reqcnt,
-				 sizeof(u32) * AP_DEVICES))
+		if (copy_to_user((int __user *) arg, reqcnt, sizeof(reqcnt)))
 			rc = -EFAULT;
 		kfree(reqcnt);
 		return rc;

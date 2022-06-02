@@ -137,7 +137,7 @@ static char *fixregex(char *s)
 		return s;
 
 	/* allocate space for a new string */
-	fixed = (char *) malloc(len + esc_count + 1);
+	fixed = (char *) malloc(len + 1);
 	if (!fixed)
 		return NULL;
 
@@ -1064,9 +1064,10 @@ static int process_one_file(const char *fpath, const struct stat *sb,
  */
 int main(int argc, char *argv[])
 {
-	int rc, ret = 0;
+	int rc;
 	int maxfds;
 	char ldirname[PATH_MAX];
+
 	const char *arch;
 	const char *output_file;
 	const char *start_dirname;
@@ -1137,8 +1138,7 @@ int main(int argc, char *argv[])
 		/* Make build fail */
 		fclose(eventsfp);
 		free_arch_std_events();
-		ret = 1;
-		goto out_free_mapfile;
+		return 1;
 	} else if (rc) {
 		goto empty_map;
 	}
@@ -1156,17 +1156,14 @@ int main(int argc, char *argv[])
 		/* Make build fail */
 		fclose(eventsfp);
 		free_arch_std_events();
-		ret = 1;
+		return 1;
 	}
 
-
-	goto out_free_mapfile;
+	return 0;
 
 empty_map:
 	fclose(eventsfp);
 	create_empty_mapping(output_file);
 	free_arch_std_events();
-out_free_mapfile:
-	free(mapfile);
-	return ret;
+	return 0;
 }

@@ -98,10 +98,9 @@ struct ip_tunnel *ip_tunnel_lookup(struct ip_tunnel_net *itn,
 				   __be32 remote, __be32 local,
 				   __be32 key)
 {
+	unsigned int hash;
 	struct ip_tunnel *t, *cand = NULL;
 	struct hlist_head *head;
-	struct net_device *ndev;
-	unsigned int hash;
 
 	hash = ip_tunnel_hash(key, remote);
 	head = &itn->tunnels[hash];
@@ -156,8 +155,11 @@ struct ip_tunnel *ip_tunnel_lookup(struct ip_tunnel_net *itn,
 			cand = t;
 	}
 
+	if (flags & TUNNEL_NO_KEY)
+		goto skip_key_lookup;
+
 	hlist_for_each_entry_rcu(t, head, hash_node) {
-		if ((!(flags & TUNNEL_NO_KEY) && t->parms.i_key != key) ||
+		if (t->parms.i_key != key ||
 		    t->parms.iph.saddr != 0 ||
 		    t->parms.iph.daddr != 0 ||
 		    !(t->dev->flags & IFF_UP))
@@ -169,6 +171,7 @@ struct ip_tunnel *ip_tunnel_lookup(struct ip_tunnel_net *itn,
 			cand = t;
 	}
 
+skip_key_lookup:
 	if (cand)
 		return cand;
 
@@ -176,9 +179,8 @@ struct ip_tunnel *ip_tunnel_lookup(struct ip_tunnel_net *itn,
 	if (t && t->dev->flags & IFF_UP)
 		return t;
 
-	ndev = READ_ONCE(itn->fb_tunnel_dev);
-	if (ndev && ndev->flags & IFF_UP)
-		return netdev_priv(ndev);
+	if (itn->fb_tunnel_dev && itn->fb_tunnel_dev->flags & IFF_UP)
+		return netdev_priv(itn->fb_tunnel_dev);
 
 	return NULL;
 }
@@ -330,7 +332,7 @@ static int ip_tunnel_bind_dev(struct net_device *dev)
 	}
 
 	dev->needed_headroom = t_hlen + hlen;
-	mtu -= t_hlen;
+	mtu -= (dev->hard_header_len + t_hlen);
 
 	if (mtu < IPV4_MIN_MTU)
 		mtu = IPV4_MIN_MTU;
@@ -360,7 +362,7 @@ static struct ip_tunnel *ip_tunnel_create(struct net *net,
 	nt = netdev_priv(dev);
 	t_hlen = nt->hlen + sizeof(struct iphdr);
 	dev->min_mtu = ETH_MIN_MTU;
-	dev->max_mtu = IP_MAX_MTU - t_hlen;
+	dev->max_mtu = IP_MAX_MTU - dev->hard_header_len - t_hlen;
 	ip_tunnel_add(itn, nt);
 	return nt;
 
@@ -502,11 +504,12 @@ static int tnl_update_pmtu(struct net_device *dev, struct sk_buff *skb,
 			    const struct iphdr *inner_iph)
 {
 	struct ip_tunnel *tunnel = netdev_priv(dev);
-	int pkt_size = skb->len - tunnel->hlen;
+	int pkt_size = skb->len - tunnel->hlen - dev->hard_header_len;
 	int mtu;
 
 	if (df)
-		mtu = dst_mtu(&rt->dst) - (sizeof(struct iphdr) + tunnel->hlen);
+		mtu = dst_mtu(&rt->dst) - dev->hard_header_len
+					- sizeof(struct iphdr) - tunnel->hlen;
 	else
 		mtu = skb_dst(skb) ? dst_mtu(skb_dst(skb)) : dev->mtu;
 
@@ -735,11 +738,7 @@ void ip_tunnel_xmit(struct sk_buff *skb, struct net_device *dev,
 		goto tx_error;
 	}
 
-	df = tnl_params->frag_off;
-	if (skb->protocol == htons(ETH_P_IP) && !tunnel->ignore_df)
-		df |= (inner_iph->frag_off & htons(IP_DF));
-
-	if (tnl_update_pmtu(dev, skb, rt, df, inner_iph)) {
+	if (tnl_update_pmtu(dev, skb, rt, tnl_params->frag_off, inner_iph)) {
 		ip_rt_put(rt);
 		goto tx_error;
 	}
@@ -766,6 +765,10 @@ void ip_tunnel_xmit(struct sk_buff *skb, struct net_device *dev,
 		else
 			ttl = ip4_dst_hoplimit(&rt->dst);
 	}
+
+	df = tnl_params->frag_off;
+	if (skb->protocol == htons(ETH_P_IP) && !tunnel->ignore_df)
+		df |= (inner_iph->frag_off&htons(IP_DF));
 
 	max_headroom = LL_RESERVED_SPACE(rt->dst.dev) + sizeof(struct iphdr)
 			+ rt->dst.header_len + ip_encap_hlen(&tunnel->encap);
@@ -934,7 +937,7 @@ int __ip_tunnel_change_mtu(struct net_device *dev, int new_mtu, bool strict)
 {
 	struct ip_tunnel *tunnel = netdev_priv(dev);
 	int t_hlen = tunnel->hlen + sizeof(struct iphdr);
-	int max_mtu = IP_MAX_MTU - t_hlen;
+	int max_mtu = IP_MAX_MTU - dev->hard_header_len - t_hlen;
 
 	if (new_mtu < ETH_MIN_MTU)
 		return -EINVAL;
@@ -1111,9 +1114,10 @@ int ip_tunnel_newlink(struct net_device *dev, struct nlattr *tb[],
 
 	mtu = ip_tunnel_bind_dev(dev);
 	if (tb[IFLA_MTU]) {
-		unsigned int max = IP_MAX_MTU - (nt->hlen + sizeof(struct iphdr));
+		unsigned int max = IP_MAX_MTU - dev->hard_header_len - nt->hlen;
 
-		mtu = clamp(dev->mtu, (unsigned int)ETH_MIN_MTU, max);
+		mtu = clamp(dev->mtu, (unsigned int)ETH_MIN_MTU,
+			    (unsigned int)(max - sizeof(struct iphdr)));
 	}
 
 	err = dev_set_mtu(dev, mtu);
@@ -1212,9 +1216,9 @@ void ip_tunnel_uninit(struct net_device *dev)
 	struct ip_tunnel_net *itn;
 
 	itn = net_generic(net, tunnel->ip_tnl_net_id);
-	ip_tunnel_del(itn, netdev_priv(dev));
-	if (itn->fb_tunnel_dev == dev)
-		WRITE_ONCE(itn->fb_tunnel_dev, NULL);
+	/* fb_tunnel_dev will be unregisted in net-exit call. */
+	if (itn->fb_tunnel_dev != dev)
+		ip_tunnel_del(itn, netdev_priv(dev));
 
 	dst_cache_reset(&tunnel->dst_cache);
 }

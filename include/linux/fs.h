@@ -945,7 +945,7 @@ struct file_handle {
 	__u32 handle_bytes;
 	int handle_type;
 	/* file identifier */
-	unsigned char f_handle[];
+	unsigned char f_handle[0];
 };
 
 static inline struct file *get_file(struct file *f)
@@ -2097,7 +2097,7 @@ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
  * I_OVL_INUSE		Used by overlayfs to get exclusive ownership on upper
  *			and work dirs among overlayfs mounts.
  *
-* I_CREATING		New object's inode in the middle of setting up.
+ * I_CREATING		New object's inode in the middle of setting up.
  *
  * I_SYNC_QUEUED	Inode is queued in b_io or b_more_io writeback lists.
  *			Used to detect that mark_inode_dirty() should not move

@@ -47,7 +47,6 @@
 #include <linux/bitmap.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>
-#include <linux/sched/mm.h>
 
 #include <xen/xen.h>
 #include <xen/xenbus.h>
@@ -936,8 +935,7 @@ static void blkif_set_queue_limits(struct blkfront_info *info)
 	if (info->feature_discard) {
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, rq);
 		blk_queue_max_discard_sectors(rq, get_capacity(gd));
-		rq->limits.discard_granularity = info->discard_granularity ?:
-						 info->physical_sector_size;
+		rq->limits.discard_granularity = info->discard_granularity;
 		rq->limits.discard_alignment = info->discard_alignment;
 		if (info->feature_secdiscard)
 			blk_queue_flag_set(QUEUE_FLAG_SECERASE, rq);
@@ -2170,12 +2168,19 @@ static void blkfront_closing(struct blkfront_info *info)
 
 static void blkfront_setup_discard(struct blkfront_info *info)
 {
+	int err;
+	unsigned int discard_granularity;
+	unsigned int discard_alignment;
+
 	info->feature_discard = 1;
-	info->discard_granularity = xenbus_read_unsigned(info->xbdev->otherend,
-							 "discard-granularity",
-							 0);
-	info->discard_alignment = xenbus_read_unsigned(info->xbdev->otherend,
-						       "discard-alignment", 0);
+	err = xenbus_gather(XBT_NIL, info->xbdev->otherend,
+		"discard-granularity", "%u", &discard_granularity,
+		"discard-alignment", "%u", &discard_alignment,
+		NULL);
+	if (!err) {
+		info->discard_granularity = discard_granularity;
+		info->discard_alignment = discard_alignment;
+	}
 	info->feature_secdiscard =
 		!!xenbus_read_unsigned(info->xbdev->otherend, "discard-secure",
 				       0);
@@ -2183,11 +2188,9 @@ static void blkfront_setup_discard(struct blkfront_info *info)
 
 static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
 {
-	unsigned int psegs, grants, memflags;
+	unsigned int psegs, grants;
 	int err, i;
 	struct blkfront_info *info = rinfo->dev_info;
-
-	memflags = memalloc_noio_save();
 
 	if (info->max_indirect_segments == 0) {
 		if (!HAS_EXTRA_REQ)
@@ -2220,7 +2223,7 @@ static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
 
 		BUG_ON(!list_empty(&rinfo->indirect_pages));
 		for (i = 0; i < num; i++) {
-			struct page *indirect_page = alloc_page(GFP_KERNEL);
+			struct page *indirect_page = alloc_page(GFP_NOIO);
 			if (!indirect_page)
 				goto out_of_memory;
 			list_add(&indirect_page->lru, &rinfo->indirect_pages);
@@ -2231,15 +2234,15 @@ static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
 		rinfo->shadow[i].grants_used =
 			kvcalloc(grants,
 				 sizeof(rinfo->shadow[i].grants_used[0]),
-				 GFP_KERNEL);
+				 GFP_NOIO);
 		rinfo->shadow[i].sg = kvcalloc(psegs,
 					       sizeof(rinfo->shadow[i].sg[0]),
-					       GFP_KERNEL);
+					       GFP_NOIO);
 		if (info->max_indirect_segments)
 			rinfo->shadow[i].indirect_grants =
 				kvcalloc(INDIRECT_GREFS(grants),
 					 sizeof(rinfo->shadow[i].indirect_grants[0]),
-					 GFP_KERNEL);
+					 GFP_NOIO);
 		if ((rinfo->shadow[i].grants_used == NULL) ||
 			(rinfo->shadow[i].sg == NULL) ||
 		     (info->max_indirect_segments &&
@@ -2248,7 +2251,6 @@ static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
 		sg_init_table(rinfo->shadow[i].sg, psegs);
 	}
 
-	memalloc_noio_restore(memflags);
 
 	return 0;
 
@@ -2268,9 +2270,6 @@ out_of_memory:
 			__free_page(indirect_page);
 		}
 	}
-
-	memalloc_noio_restore(memflags);
-
 	return -ENOMEM;
 }
 
@@ -2422,7 +2421,7 @@ static void blkfront_connect(struct blkfront_info *info)
 	for (i = 0; i < info->nr_rings; i++)
 		kick_pending_request_queues(&info->rinfo[i]);
 
-	device_add_disk(&info->xbdev->dev, info->gd, NULL);
+	device_add_disk(&info->xbdev->dev, info->gd);
 
 	info->is_ready = 1;
 	return;

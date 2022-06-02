@@ -725,12 +725,12 @@ static int ip_vs_route_me_harder(struct netns_ipvs *ipvs, int af,
 		struct dst_entry *dst = skb_dst(skb);
 
 		if (dst->dev && !(dst->dev->flags & IFF_LOOPBACK) &&
-		    ip6_route_me_harder(ipvs->net, skb->sk, skb) != 0)
+		    ip6_route_me_harder(ipvs->net, skb) != 0)
 			return 1;
 	} else
 #endif
 		if (!(skb_rtable(skb)->rt_flags & RTCF_LOCAL) &&
-		    ip_route_me_harder(ipvs->net, skb->sk, skb, RTN_LOCAL) != 0)
+		    ip_route_me_harder(ipvs->net, skb, RTN_LOCAL) != 0)
 			return 1;
 
 	return 0;
@@ -1928,14 +1928,14 @@ ip_vs_in(struct netns_ipvs *ipvs, unsigned int hooknum, struct sk_buff *skb, int
 
 	conn_reuse_mode = sysctl_conn_reuse_mode(ipvs);
 	if (conn_reuse_mode && !iph.fragoffs && is_new_conn(skb, &iph) && cp) {
-		bool old_ct = false, resched = false;
+		bool uses_ct = false, resched = false;
 
 		if (unlikely(sysctl_expire_nodest_conn(ipvs)) && cp->dest &&
 		    unlikely(!atomic_read(&cp->dest->weight))) {
 			resched = true;
-			old_ct = ip_vs_conn_uses_old_conntrack(cp, skb);
+			uses_ct = ip_vs_conn_uses_conntrack(cp, skb);
 		} else if (is_new_conn_expected(cp, conn_reuse_mode)) {
-			old_ct = ip_vs_conn_uses_old_conntrack(cp, skb);
+			uses_ct = ip_vs_conn_uses_conntrack(cp, skb);
 			if (!atomic_read(&cp->n_control)) {
 				resched = true;
 			} else {
@@ -1943,17 +1943,15 @@ ip_vs_in(struct netns_ipvs *ipvs, unsigned int hooknum, struct sk_buff *skb, int
 				 * that uses conntrack while it is still
 				 * referenced by controlled connection(s).
 				 */
-				resched = !old_ct;
+				resched = !uses_ct;
 			}
 		}
 
 		if (resched) {
-			if (!old_ct)
-				cp->flags &= ~IP_VS_CONN_F_NFCT;
 			if (!atomic_read(&cp->n_control))
 				ip_vs_conn_expire_now(cp);
 			__ip_vs_conn_put(cp);
-			if (old_ct)
+			if (uses_ct)
 				return NF_DROP;
 			cp = NULL;
 		}

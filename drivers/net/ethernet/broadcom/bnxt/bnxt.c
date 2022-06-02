@@ -6298,10 +6298,9 @@ void bnxt_tx_disable(struct bnxt *bp)
 			txr->dev_state = BNXT_DEV_STATE_CLOSING;
 		}
 	}
-	/* Drop carrier first to prevent TX timeout */
-	netif_carrier_off(bp->dev);
 	/* Stop all TX queues */
 	netif_tx_disable(bp->dev);
+	netif_carrier_off(bp->dev);
 }
 
 void bnxt_tx_enable(struct bnxt *bp)
@@ -6327,11 +6326,6 @@ static void bnxt_report_link(struct bnxt *bp)
 		u16 fec;
 
 		netif_carrier_on(bp->dev);
-		speed = bnxt_fw_to_ethtool_speed(bp->link_info.link_speed);
-		if (speed == SPEED_UNKNOWN) {
-			netdev_info(bp->dev, "NIC Link is Up, speed unknown\n");
-			return;
-		}
 		if (bp->link_info.duplex == BNXT_LINK_DUPLEX_FULL)
 			duplex = "full";
 		else
@@ -6344,6 +6338,7 @@ static void bnxt_report_link(struct bnxt *bp)
 			flow_ctrl = "ON - receive";
 		else
 			flow_ctrl = "none";
+		speed = bnxt_fw_to_ethtool_speed(bp->link_info.link_speed);
 		netdev_info(bp->dev, "NIC Link is Up, %u Mbps %s duplex, Flow control: %s\n",
 			    speed, duplex, flow_ctrl);
 		if (bp->flags & BNXT_FLAG_EEE_CAP)
@@ -6841,19 +6836,16 @@ static ssize_t bnxt_show_temp(struct device *dev,
 	struct hwrm_temp_monitor_query_input req = {0};
 	struct hwrm_temp_monitor_query_output *resp;
 	struct bnxt *bp = dev_get_drvdata(dev);
-	u32 len = 0;
-	int rc;
+	u32 temp = 0;
 
 	resp = bp->hwrm_cmd_resp_addr;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TEMP_MONITOR_QUERY, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
-		len = sprintf(buf, "%u\n", resp->temp * 1000); /* display millidegree */
+	if (!_hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT))
+		temp = resp->temp * 1000; /* display millidegree */
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	if (rc)
-		return rc;
-	return len;
+
+	return sprintf(buf, "%u\n", temp);
 }
 static SENSOR_DEVICE_ATTR(temp1_input, 0444, bnxt_show_temp, NULL, 0);
 
@@ -6873,16 +6865,7 @@ static void bnxt_hwmon_close(struct bnxt *bp)
 
 static void bnxt_hwmon_open(struct bnxt *bp)
 {
-	struct hwrm_temp_monitor_query_input req = {0};
 	struct pci_dev *pdev = bp->pdev;
-	int rc;
-
-	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TEMP_MONITOR_QUERY, -1, -1);
-	rc = hwrm_send_message_silent(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc == -EACCES || rc == -EOPNOTSUPP) {
-		bnxt_hwmon_close(bp);
-		return;
-	}
 
 	bp->hwmon_dev = hwmon_device_register_with_groups(&pdev->dev,
 							  DRV_MODULE_NAME, bp,
@@ -7041,14 +7024,14 @@ static int __bnxt_open_nic(struct bnxt *bp, bool irq_re_init, bool link_re_init)
 		}
 	}
 
+	bnxt_enable_napi(bp);
+	bnxt_debug_dev_init(bp);
+
 	rc = bnxt_init_nic(bp, irq_re_init);
 	if (rc) {
 		netdev_err(bp->dev, "bnxt_init_nic err: %x\n", rc);
-		goto open_err_irq;
+		goto open_err;
 	}
-
-	bnxt_enable_napi(bp);
-	bnxt_debug_dev_init(bp);
 
 	if (link_re_init) {
 		mutex_lock(&bp->link_lock);
@@ -7079,6 +7062,10 @@ static int __bnxt_open_nic(struct bnxt *bp, bool irq_re_init, bool link_re_init)
 	if (BNXT_PF(bp))
 		bnxt_vf_reps_open(bp);
 	return 0;
+
+open_err:
+	bnxt_debug_dev_exit(bp);
+	bnxt_disable_napi(bp);
 
 open_err_irq:
 	bnxt_del_napi(bp);
@@ -7190,7 +7177,7 @@ static void __bnxt_close_nic(struct bnxt *bp, bool irq_re_init,
 	bnxt_free_skbs(bp);
 
 	/* Save ring stats before shutdown */
-	if (bp->bnapi && irq_re_init)
+	if (bp->bnapi)
 		bnxt_get_ring_stats(bp, &bp->net_stats_prev);
 	if (irq_re_init) {
 		bnxt_free_irq(bp);
@@ -7575,7 +7562,6 @@ static netdev_features_t bnxt_fix_features(struct net_device *dev,
 					   netdev_features_t features)
 {
 	struct bnxt *bp = netdev_priv(dev);
-	netdev_features_t vlan_features;
 
 	if ((features & NETIF_F_NTUPLE) && !bnxt_rfs_capable(bp))
 		features &= ~NETIF_F_NTUPLE;
@@ -7592,14 +7578,12 @@ static netdev_features_t bnxt_fix_features(struct net_device *dev,
 	/* Both CTAG and STAG VLAN accelaration on the RX side have to be
 	 * turned on or off together.
 	 */
-	vlan_features = features & (NETIF_F_HW_VLAN_CTAG_RX |
-				    NETIF_F_HW_VLAN_STAG_RX);
-	if (vlan_features != (NETIF_F_HW_VLAN_CTAG_RX |
-			      NETIF_F_HW_VLAN_STAG_RX)) {
+	if ((features & (NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_HW_VLAN_STAG_RX)) !=
+	    (NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_HW_VLAN_STAG_RX)) {
 		if (dev->features & NETIF_F_HW_VLAN_CTAG_RX)
 			features &= ~(NETIF_F_HW_VLAN_CTAG_RX |
 				      NETIF_F_HW_VLAN_STAG_RX);
-		else if (vlan_features)
+		else
 			features |= NETIF_F_HW_VLAN_CTAG_RX |
 				    NETIF_F_HW_VLAN_STAG_RX;
 	}
@@ -8024,8 +8008,7 @@ static int bnxt_init_board(struct pci_dev *pdev, struct net_device *dev)
 	if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)) != 0 &&
 	    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)) != 0) {
 		dev_err(&pdev->dev, "System does not support DMA, aborting\n");
-		rc = -EIO;
-		goto init_err_release;
+		goto init_err_disable;
 	}
 
 	pci_set_master(pdev);
@@ -8839,10 +8822,6 @@ static int bnxt_set_dflt_rings(struct bnxt *bp, bool sh)
 		bp->rx_nr_rings++;
 		bp->cp_nr_rings++;
 	}
-	if (rc) {
-		bp->tx_nr_rings = 0;
-		bp->rx_nr_rings = 0;
-	}
 	return rc;
 }
 
@@ -9124,7 +9103,6 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 				create_singlethread_workqueue("bnxt_pf_wq");
 			if (!bnxt_pf_wq) {
 				dev_err(&pdev->dev, "Unable to create workqueue.\n");
-				rc = -ENOMEM;
 				goto init_err_pci_clean;
 			}
 		}
@@ -9143,7 +9121,6 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		    (long)pci_resource_start(pdev, 0), dev->dev_addr);
 	pcie_print_link_status(pdev);
 
-	pci_save_state(pdev);
 	return 0;
 
 init_err_cleanup_tc:
@@ -9305,8 +9282,6 @@ static pci_ers_result_t bnxt_io_slot_reset(struct pci_dev *pdev)
 			"Cannot re-enable PCI device after reset.\n");
 	} else {
 		pci_set_master(pdev);
-		pci_restore_state(pdev);
-		pci_save_state(pdev);
 
 		err = bnxt_hwrm_func_reset(bp);
 		if (!err && netif_running(netdev))
@@ -9318,11 +9293,8 @@ static pci_ers_result_t bnxt_io_slot_reset(struct pci_dev *pdev)
 		}
 	}
 
-	if (result != PCI_ERS_RESULT_RECOVERED) {
-		if (netif_running(netdev))
-			dev_close(netdev);
-		pci_disable_device(pdev);
-	}
+	if (result != PCI_ERS_RESULT_RECOVERED && netif_running(netdev))
+		dev_close(netdev);
 
 	rtnl_unlock();
 
@@ -9333,7 +9305,7 @@ static pci_ers_result_t bnxt_io_slot_reset(struct pci_dev *pdev)
 			 err); /* non-fatal, continue */
 	}
 
-	return result;
+	return PCI_ERS_RESULT_RECOVERED;
 }
 
 /**

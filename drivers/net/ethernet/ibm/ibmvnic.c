@@ -212,13 +212,8 @@ static void free_long_term_buff(struct ibmvnic_adapter *adapter,
 	if (!ltb->buff)
 		return;
 
-	/* VIOS automatically unmaps the long term buffer at remote
-	 * end for the following resets:
-	 * FAILOVER, MOBILITY, TIMEOUT.
-	 */
 	if (adapter->reset_reason != VNIC_RESET_FAILOVER &&
-	    adapter->reset_reason != VNIC_RESET_MOBILITY &&
-	    adapter->reset_reason != VNIC_RESET_TIMEOUT)
+	    adapter->reset_reason != VNIC_RESET_MOBILITY)
 		send_request_unmap(adapter, ltb->map_id);
 	dma_free_coherent(dev, ltb->size, ltb->buff, ltb->addr);
 }
@@ -797,13 +792,12 @@ static int ibmvnic_login(struct net_device *netdev)
 	struct ibmvnic_adapter *adapter = netdev_priv(netdev);
 	unsigned long timeout = msecs_to_jiffies(30000);
 	int retry_count = 0;
-	int retries = 10;
 	bool retry;
 	int rc;
 
 	do {
 		retry = false;
-		if (retry_count > retries) {
+		if (retry_count > IBMVNIC_MAX_QUEUES) {
 			netdev_warn(netdev, "Login attempts exceeded\n");
 			return -1;
 		}
@@ -818,23 +812,11 @@ static int ibmvnic_login(struct net_device *netdev)
 
 		if (!wait_for_completion_timeout(&adapter->init_done,
 						 timeout)) {
-			netdev_warn(netdev, "Login timed out, retrying...\n");
-			retry = true;
-			adapter->init_done_rc = 0;
-			retry_count++;
-			continue;
+			netdev_warn(netdev, "Login timed out\n");
+			return -1;
 		}
 
-		if (adapter->init_done_rc == ABORTED) {
-			netdev_warn(netdev, "Login aborted, retrying...\n");
-			retry = true;
-			adapter->init_done_rc = 0;
-			retry_count++;
-			/* FW or device may be busy, so
-			 * wait a bit before retrying login
-			 */
-			msleep(500);
-		} else if (adapter->init_done_rc == PARTIALSUCCESS) {
+		if (adapter->init_done_rc == PARTIALSUCCESS) {
 			retry_count++;
 			release_sub_crqs(adapter, 1);
 
@@ -1092,12 +1074,18 @@ static int __ibmvnic_open(struct net_device *netdev)
 
 	rc = set_link_state(adapter, IBMVNIC_LOGICAL_LNK_UP);
 	if (rc) {
-		ibmvnic_napi_disable(adapter);
+		for (i = 0; i < adapter->req_rx_queues; i++)
+			napi_disable(&adapter->napi[i]);
 		release_resources(adapter);
 		return rc;
 	}
 
 	netif_tx_start_all_queues(netdev);
+
+	if (prev_state == VNIC_CLOSED) {
+		for (i = 0; i < adapter->req_rx_queues; i++)
+			napi_schedule(&adapter->napi[i]);
+	}
 
 	adapter->state = VNIC_OPEN;
 	return rc;
@@ -1256,8 +1244,10 @@ static int __ibmvnic_close(struct net_device *netdev)
 
 	adapter->state = VNIC_CLOSING;
 	rc = set_link_state(adapter, IBMVNIC_LOGICAL_LNK_DN);
+	if (rc)
+		return rc;
 	adapter->state = VNIC_CLOSED;
-	return rc;
+	return 0;
 }
 
 static int ibmvnic_close(struct net_device *netdev)
@@ -1520,9 +1510,6 @@ static netdev_tx_t ibmvnic_xmit(struct sk_buff *skb, struct net_device *netdev)
 		skb_copy_from_linear_data(skb, dst, skb->len);
 	}
 
-	/* post changes to long_term_buff *dst before VIOS accessing it */
-	dma_wmb();
-
 	tx_pool->consumer_index =
 	    (tx_pool->consumer_index + 1) % tx_pool->num_buffers;
 
@@ -1755,7 +1742,7 @@ static int do_reset(struct ibmvnic_adapter *adapter,
 	u64 old_num_rx_queues, old_num_tx_queues;
 	u64 old_num_rx_slots, old_num_tx_slots;
 	struct net_device *netdev = adapter->netdev;
-	int rc;
+	int i, rc;
 
 	netdev_dbg(adapter->netdev, "Re-setting driver (%d)\n",
 		   rwi->reset_reason);
@@ -1873,11 +1860,13 @@ static int do_reset(struct ibmvnic_adapter *adapter,
 	/* refresh device's multicast list */
 	ibmvnic_set_multi(netdev);
 
+	/* kick napi */
+	for (i = 0; i < adapter->req_rx_queues; i++)
+		napi_schedule(&adapter->napi[i]);
+
 	if (adapter->reset_reason != VNIC_RESET_FAILOVER &&
-	    adapter->reset_reason != VNIC_RESET_CHANGE_PARAM) {
+	    adapter->reset_reason != VNIC_RESET_CHANGE_PARAM)
 		call_netdevice_notifiers(NETDEV_NOTIFY_PEERS, netdev);
-		call_netdevice_notifiers(NETDEV_RESEND_IGMP, netdev);
-	}
 
 	netif_carrier_on(netdev);
 
@@ -2154,12 +2143,6 @@ restart_poll:
 
 		if (!pending_scrq(adapter, adapter->rx_scrq[scrq_num]))
 			break;
-		/* The queue entry at the current index is peeked at above
-		 * to determine that there is a valid descriptor awaiting
-		 * processing. We want to be sure that the current slot
-		 * holds a valid descriptor before reading its contents.
-		 */
-		dma_rmb();
 		next = ibmvnic_next_scrq(adapter, adapter->rx_scrq[scrq_num]);
 		rx_buff =
 		    (struct ibmvnic_rx_buff *)be64_to_cpu(next->
@@ -2184,8 +2167,6 @@ restart_poll:
 		offset = be16_to_cpu(next->rx_comp.off_frame_data);
 		flags = next->rx_comp.flags;
 		skb = rx_buff->skb;
-		/* load long_term_buff before copying to skb */
-		dma_rmb();
 		skb_copy_to_linear_data(skb, rx_buff->data + offset,
 					length);
 
@@ -2566,9 +2547,6 @@ static int reset_sub_crq_queues(struct ibmvnic_adapter *adapter)
 {
 	int i, rc;
 
-	if (!adapter->tx_scrq || !adapter->rx_scrq)
-		return -EINVAL;
-
 	for (i = 0; i < adapter->req_tx_queues; i++) {
 		netdev_dbg(adapter->netdev, "Re-setting tx_scrq[%d]\n", i);
 		rc = reset_one_sub_crq_queue(adapter, adapter->tx_scrq[i]);
@@ -2753,12 +2731,10 @@ static int enable_scrq_irq(struct ibmvnic_adapter *adapter,
 
 	if (adapter->resetting &&
 	    adapter->reset_reason == VNIC_RESET_MOBILITY) {
-		u64 val = (0xff000000) | scrq->hw_irq;
+		struct irq_desc *desc = irq_to_desc(scrq->irq);
+		struct irq_chip *chip = irq_desc_get_chip(desc);
 
-		rc = plpar_hcall_norets(H_EOI, val);
-		if (rc)
-			dev_err(dev, "H_EOI FAILED irq 0x%llx. rc=%ld\n",
-				val, rc);
+		chip->irq_eoi(&desc->irq_data);
 	}
 
 	rc = plpar_hcall_norets(H_VIOCTL, adapter->vdev->unit_address,
@@ -2784,18 +2760,13 @@ restart_loop:
 		unsigned int pool = scrq->pool_index;
 		int num_entries = 0;
 
-		/* The queue entry at the current index is peeked at above
-		 * to determine that there is a valid descriptor awaiting
-		 * processing. We want to be sure that the current slot
-		 * holds a valid descriptor before reading its contents.
-		 */
-		dma_rmb();
-
 		next = ibmvnic_next_scrq(adapter, scrq);
 		for (i = 0; i < next->tx_comp.num_comps; i++) {
-			if (next->tx_comp.rcs[i])
+			if (next->tx_comp.rcs[i]) {
 				dev_err(dev, "tx error %x\n",
 					next->tx_comp.rcs[i]);
+				continue;
+			}
 			index = be32_to_cpu(next->tx_comp.correlators[i]);
 			if (index & IBMVNIC_TSO_POOL_MASK) {
 				tx_pool = &adapter->tso_pool[pool];
@@ -2940,7 +2911,7 @@ req_rx_irq_failed:
 req_tx_irq_failed:
 	for (j = 0; j < i; j++) {
 		free_irq(adapter->tx_scrq[j]->irq, adapter->tx_scrq[j]);
-		irq_dispose_mapping(adapter->tx_scrq[j]->irq);
+		irq_dispose_mapping(adapter->rx_scrq[j]->irq);
 	}
 	release_sub_crqs(adapter, 1);
 	return rc;
@@ -3184,11 +3155,6 @@ static union sub_crq *ibmvnic_next_scrq(struct ibmvnic_adapter *adapter,
 		entry = NULL;
 	}
 	spin_unlock_irqrestore(&scrq->lock, flags);
-
-	/* Ensure that the entire buffer descriptor has been
-	 * loaded before reading its contents
-	 */
-	dma_rmb();
 
 	return entry;
 }
@@ -4327,10 +4293,12 @@ static void ibmvnic_handle_crq(union ibmvnic_crq *crq,
 			dev_err(dev, "Error %ld in VERSION_EXCHG_RSP\n", rc);
 			break;
 		}
-		ibmvnic_version =
-			    be16_to_cpu(crq->version_exchange_rsp.version);
 		dev_info(dev, "Partner protocol version is %d\n",
-			 ibmvnic_version);
+			 crq->version_exchange_rsp.version);
+		if (be16_to_cpu(crq->version_exchange_rsp.version) <
+		    ibmvnic_version)
+			ibmvnic_version =
+			    be16_to_cpu(crq->version_exchange_rsp.version);
 		send_cap_queries(adapter);
 		break;
 	case QUERY_CAPABILITY_RSP:
@@ -4432,12 +4400,6 @@ static void ibmvnic_tasklet(void *data)
 	while (!done) {
 		/* Pull all the valid messages off the CRQ */
 		while ((crq = ibmvnic_next_crq(adapter)) != NULL) {
-			/* This barrier makes sure ibmvnic_next_crq()'s
-			 * crq->generic.first & IBMVNIC_CRQ_CMD_RSP is loaded
-			 * before ibmvnic_handle_crq()'s
-			 * switch(gen_crq->first) and switch(gen_crq->cmd).
-			 */
-			dma_rmb();
 			ibmvnic_handle_crq(crq, adapter);
 			crq->generic.first = 0;
 		}
@@ -4484,9 +4446,6 @@ static int ibmvnic_reset_crq(struct ibmvnic_adapter *adapter)
 	} while (rc == H_BUSY || H_IS_LONG_BUSY(rc));
 
 	/* Clean out the queue */
-	if (!crq->msgs)
-		return -EINVAL;
-
 	memset(crq->msgs, 0, PAGE_SIZE);
 	crq->cur = 0;
 	crq->active = false;

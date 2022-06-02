@@ -603,7 +603,6 @@ enum rtl8152_flags {
 
 /* Define these values to match your device */
 #define VENDOR_ID_REALTEK		0x0bda
-#define VENDOR_ID_MICROSOFT		0x045e
 #define VENDOR_ID_SAMSUNG		0x04e8
 #define VENDOR_ID_LENOVO		0x17ef
 #define VENDOR_ID_TPLINK		0x2357
@@ -5925,12 +5924,6 @@ static void r8153_init(struct r8152 *tp)
 
 	ocp_write_word(tp, MCU_TYPE_USB, USB_CONNECT_TIMER, 0x0001);
 
-	/* MAC clock speed down */
-	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL, 0);
-	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL2, 0);
-	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL3, 0);
-	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL4, 0);
-
 	r8153_power_cut_en(tp, false);
 	r8153_u1u2en(tp, true);
 
@@ -7459,8 +7452,6 @@ static struct usb_device_id rtl8152_table[] = {
 	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x720c)},
 	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x7214)},
 	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x7214)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_LENOVO, 0x721e)},
-	{REALTEK_USB_DEVICE_INTERFACE_CLASS_AND_INTERFACE_INFO(VENDOR_ID_LENOVO, 0x721e)},	
 
 	/* TP-LINK */
 	{REALTEK_USB_DEVICE_INTERFACE_CLASS(VENDOR_ID_TPLINK, 0x0601)},
@@ -7489,6 +7480,7 @@ static struct usb_driver rtl8152_driver = {
 	.disable_hub_initiated_lpm = 1,
 #endif
 };
+
 module_usb_driver(rtl8152_driver);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);

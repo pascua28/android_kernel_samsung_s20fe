@@ -121,18 +121,6 @@ int randomize_va_space __read_mostly =
 					2;
 #endif
 
-#ifndef arch_faults_on_old_pte
-static inline bool arch_faults_on_old_pte(void)
-{
-	/*
-	 * Those arches which don't have hw access flag feature need to
-	 * implement their own helper. By default, "true" means pagefault
-	 * will be hit on old pte.
-	 */
-	return true;
-}
-#endif
-
 static int __init disable_randmaps(char *s)
 {
 	randomize_va_space = 0;
@@ -153,7 +141,7 @@ static int __init init_zero_pfn(void)
 	zero_pfn = page_to_pfn(ZERO_PAGE(0));
 	return 0;
 }
-early_initcall(init_zero_pfn);
+core_initcall(init_zero_pfn);
 
 /*
  * Only trace rss_stat when there is a 512kb cross over.
@@ -2035,11 +2023,11 @@ static int remap_pte_range(struct mm_struct *mm, pmd_t *pmd,
 			unsigned long addr, unsigned long end,
 			unsigned long pfn, pgprot_t prot)
 {
-	pte_t *pte, *mapped_pte;
+	pte_t *pte;
 	spinlock_t *ptl;
 	int err = 0;
 
-	mapped_pte = pte = pte_alloc_map_lock(mm, pmd, addr, &ptl);
+	pte = pte_alloc_map_lock(mm, pmd, addr, &ptl);
 	if (!pte)
 		return -ENOMEM;
 	arch_enter_lazy_mmu_mode();
@@ -2053,7 +2041,7 @@ static int remap_pte_range(struct mm_struct *mm, pmd_t *pmd,
 		pfn++;
 	} while (pte++, addr += PAGE_SIZE, addr != end);
 	arch_leave_lazy_mmu_mode();
-	pte_unmap_unlock(mapped_pte, ptl);
+	pte_unmap_unlock(pte - 1, ptl);
 	return err;
 }
 
@@ -2530,23 +2518,9 @@ static inline int pte_unmap_same(struct vm_fault *vmf)
 	return ret;
 }
 
-static inline bool cow_user_page(struct page *dst, struct page *src,
-				 struct vm_fault *vmf)
+static inline void cow_user_page(struct page *dst, struct page *src, unsigned long va, struct vm_area_struct *vma)
 {
-	bool ret;
-	void *kaddr;
-	void __user *uaddr;
-	bool locked = false;
-	struct vm_area_struct *vma = vmf->vma;
-	struct mm_struct *mm = vma->vm_mm;
-	unsigned long addr = vmf->address;
-
 	debug_dma_assert_idle(src);
-
-	if (likely(src)) {
-		copy_user_highpage(dst, src, addr, vma);
-		return true;
-	}
 
 	/*
 	 * If the source page was a PFN mapping, we don't have
@@ -2554,77 +2528,22 @@ static inline bool cow_user_page(struct page *dst, struct page *src,
 	 * just copying from the original user address. If that
 	 * fails, we just zero-fill it. Live with it.
 	 */
-	kaddr = kmap_atomic(dst);
-	uaddr = (void __user *)(addr & PAGE_MASK);
-
-	/*
-	 * On architectures with software "accessed" bits, we would
-	 * take a double page fault, so mark it accessed here.
-	 */
-	if (arch_faults_on_old_pte() && !pte_young(vmf->orig_pte)) {
-		pte_t entry;
-
-		vmf->pte = pte_offset_map_lock(mm, vmf->pmd, addr, &vmf->ptl);
-		locked = true;
-		if (!likely(pte_same(*vmf->pte, vmf->orig_pte))) {
-			/*
-			 * Other thread has already handled the fault
-			 * and we don't need to do anything. If it's
-			 * not the case, the fault will be triggered
-			 * again on the same address.
-			 */
-			ret = false;
-			goto pte_unlock;
-		}
-
-		entry = pte_mkyoung(vmf->orig_pte);
-		if (ptep_set_access_flags(vma, addr, vmf->pte, entry, 0))
-			update_mmu_cache(vma, addr, vmf->pte);
-	}
-
-	/*
-	 * This really shouldn't fail, because the page is there
-	 * in the page tables. But it might just be unreadable,
-	 * in which case we just give up and fill the result with
-	 * zeroes.
-	 */
-	if (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) {
-		if (locked)
-			goto warn;
-
-		/* Re-validate under PTL if the page is still mapped */
-		vmf->pte = pte_offset_map_lock(mm, vmf->pmd, addr, &vmf->ptl);
-		locked = true;
-		if (!likely(pte_same(*vmf->pte, vmf->orig_pte))) {
-			/* The PTE changed under us. Retry page fault. */
-			ret = false;
-			goto pte_unlock;
-		}
+	if (unlikely(!src)) {
+		void *kaddr = kmap_atomic(dst);
+		void __user *uaddr = (void __user *)(va & PAGE_MASK);
 
 		/*
-		 * The same page can be mapped back since last copy attampt.
-		 * Try to copy again under PTL.
+		 * This really shouldn't fail, because the page is there
+		 * in the page tables. But it might just be unreadable,
+		 * in which case we just give up and fill the result with
+		 * zeroes.
 		 */
-		if (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) {
-			/*
-			 * Give a warn in case there can be some obscure
-			 * use-case
-			 */
-warn:
-			WARN_ON_ONCE(1);
+		if (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE))
 			clear_page(kaddr);
-		}
-	}
-
-	ret = true;
-
-pte_unlock:
-	if (locked)
-		pte_unmap_unlock(vmf->pte, vmf->ptl);
-	kunmap_atomic(kaddr);
-	flush_dcache_page(dst);
-
-	return ret;
+		kunmap_atomic(kaddr);
+		flush_dcache_page(dst);
+	} else
+		copy_user_highpage(dst, src, va, vma);
 }
 
 static gfp_t __get_fault_gfp_mask(struct vm_area_struct *vma)
@@ -2756,7 +2675,7 @@ static inline void wp_page_reuse(struct vm_fault *vmf)
  *   relevant references. This includes dropping the reference the page-table
  *   held to the old page, as well as updating the rmap.
  * - In any case, unlock the PTL and drop the reference we took to the old page.
-*/
+ */
 static vm_fault_t wp_page_copy(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
@@ -2783,19 +2702,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
 				vmf->address);
 		if (!new_page)
 			goto out;
-
-		if (!cow_user_page(new_page, old_page, vmf)) {
-			/*
-			 * COW failed, if the fault was solved by other,
-			 * it's fine. If not, userspace would re-fault on
-			 * the same address and we will handle the fault
-			 * from the second attempt.
-			 */
-			put_page(new_page);
-			if (old_page)
-				put_page(old_page);
-			return 0;
-		}
+		cow_user_page(new_page, old_page, vmf->address, vma);
 	}
 
 	if (mem_cgroup_try_charge_delay(new_page, mm, GFP_KERNEL, &memcg, false))
@@ -5417,19 +5324,17 @@ long copy_huge_page_from_user(struct page *dst_page,
 	void *page_kaddr;
 	unsigned long i, rc = 0;
 	unsigned long ret_val = pages_per_huge_page * PAGE_SIZE;
-	struct page *subpage = dst_page;
 
-	for (i = 0; i < pages_per_huge_page;
-	     i++, subpage = mem_map_next(subpage, dst_page, i)) {
+	for (i = 0; i < pages_per_huge_page; i++) {
 		if (allow_pagefault)
-			page_kaddr = kmap(subpage);
+			page_kaddr = kmap(dst_page + i);
 		else
-			page_kaddr = kmap_atomic(subpage);
+			page_kaddr = kmap_atomic(dst_page + i);
 		rc = copy_from_user(page_kaddr,
 				(const void __user *)(src + i * PAGE_SIZE),
 				PAGE_SIZE);
 		if (allow_pagefault)
-			kunmap(subpage);
+			kunmap(dst_page + i);
 		else
 			kunmap_atomic(page_kaddr);
 

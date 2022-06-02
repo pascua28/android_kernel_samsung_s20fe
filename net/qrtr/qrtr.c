@@ -552,7 +552,7 @@ static int qrtr_node_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 	struct qrtr_hdr_v1 *hdr;
 	int confirm_rx;
 	size_t len = skb->len;
-	int rc;
+	int rc = -ENODEV;
 
 	if (!atomic_read(&node->hello_sent) && type != QRTR_TYPE_HELLO) {
 		kfree_skb(skb);
@@ -584,7 +584,6 @@ static int qrtr_node_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 	if (to->sq_node == QRTR_NODE_BCAST)
 		hdr->dst_node_id = cpu_to_le32(node->nid);
 	else
-
 		hdr->dst_node_id = cpu_to_le32(to->sq_node);
 
 	hdr->dst_port_id = cpu_to_le32(to->sq_port);
@@ -599,17 +598,12 @@ static int qrtr_node_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 		return rc;
 	}
 
-	rc = skb_put_padto(skb, ALIGN(len, 4) + sizeof(*hdr));
-
-	if (!rc) {
-		mutex_lock(&node->ep_lock);
-		rc = -ENODEV;
-		if (node->ep)
-			rc = node->ep->xmit(node->ep, skb);
-		else
-			kfree_skb(skb);
-		mutex_unlock(&node->ep_lock);
-	}
+	mutex_lock(&node->ep_lock);
+	if (node->ep)
+		rc = node->ep->xmit(node->ep, skb);
+	else
+		kfree_skb(skb);
+	mutex_unlock(&node->ep_lock);
 
 	if (!rc && type == QRTR_TYPE_HELLO)
 		atomic_inc(&node->hello_sent);
@@ -624,7 +618,7 @@ static int qrtr_node_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 			atomic_dec(&flow->pending);
 		mutex_unlock(&node->qrtr_tx_lock);
 	}
-	
+
 	return rc;
 }
 
@@ -808,7 +802,7 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 	unsigned int ver;
 	size_t hdrlen;
 
-	if (len == 0 || len & 3)
+	if (len & 3)
 		return -EINVAL;
 
 	skb = alloc_skb_with_frags(sizeof(*v1), len, 0, &errcode, GFP_ATOMIC);
@@ -827,8 +821,6 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 
 	switch (ver) {
 	case QRTR_PROTO_VER_1:
-		if (len < sizeof(*v1))
-			goto err;
 		v1 = data;
 		hdrlen = sizeof(*v1);
 
@@ -842,8 +834,6 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 		size = le32_to_cpu(v1->size);
 		break;
 	case QRTR_PROTO_VER_2:
-		if (len < sizeof(*v2))
-			goto err;
 		v2 = data;
 		hdrlen = sizeof(*v2) + v2->optlen;
 
@@ -1375,27 +1365,25 @@ static void qrtr_port_remove(struct qrtr_sock *ipc)
  */
 static int qrtr_port_assign(struct qrtr_sock *ipc, int *port)
 {
-	u32 min_port;
 	int rc;
 
 	if (!*port) {
-		min_port = QRTR_MIN_EPH_SOCKET;
-		rc = idr_alloc_u32(&qrtr_ports, ipc, &min_port, QRTR_MAX_EPH_SOCKET, GFP_ATOMIC);
-		if (!rc)
-			*port = min_port;
+		rc = idr_alloc_cyclic(&qrtr_ports, ipc, QRTR_MIN_EPH_SOCKET,
+				      QRTR_MAX_EPH_SOCKET + 1, GFP_ATOMIC);
+		if (rc >= 0)
+			*port = rc;
 	} else if (*port < QRTR_MIN_EPH_SOCKET &&
 		   !(capable(CAP_NET_ADMIN) ||
 		   in_egroup_p(AID_VENDOR_QRTR) ||
 		   in_egroup_p(GLOBAL_ROOT_GID))) {
 		rc = -EACCES;
 	} else if (*port == QRTR_PORT_CTRL) {
-		min_port = 0;
-		rc = idr_alloc_u32(&qrtr_ports, ipc, &min_port, 0, GFP_ATOMIC);
+		rc = idr_alloc(&qrtr_ports, ipc, 0, 1, GFP_ATOMIC);
 	} else {
-		min_port = *port;
-		rc = idr_alloc_u32(&qrtr_ports, ipc, &min_port, *port, GFP_ATOMIC);
-		if (!rc)
-			*port = min_port;
+		rc = idr_alloc_cyclic(&qrtr_ports, ipc, *port, *port + 1,
+				      GFP_ATOMIC);
+		if (rc >= 0)
+			*port = rc;
 	}
 
 	if (rc == -ENOSPC)
@@ -1575,7 +1563,7 @@ static int qrtr_bcast_enqueue(struct qrtr_node *node, struct sk_buff *skb,
 	}
 	up_read(&qrtr_node_lock);
 
-	qrtr_local_enqueue(NULL, skb, type, from, to, flags);
+	qrtr_local_enqueue(node, skb, type, from, to, flags);
 
 	return 0;
 }
@@ -1630,28 +1618,31 @@ static int qrtr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	node = NULL;
 	srv_node = NULL;
 	if (addr->sq_node == QRTR_NODE_BCAST) {
-		if (addr->sq_port != QRTR_PORT_CTRL &&
-		    qrtr_local_nid != QRTR_NODE_BCAST) {
+		enqueue_fn = qrtr_bcast_enqueue;
+		if (addr->sq_port != QRTR_PORT_CTRL) {
 			release_sock(sk);
 			return -ENOTCONN;
 		}
-		enqueue_fn = qrtr_bcast_enqueue;
 	} else if (addr->sq_node == ipc->us.sq_node) {
 		enqueue_fn = qrtr_local_enqueue;
 	} else {
+		enqueue_fn = qrtr_node_enqueue;
 		node = qrtr_node_lookup(addr->sq_node);
 		if (!node) {
 			release_sock(sk);
 			return -ECONNRESET;
 		}
-		enqueue_fn = qrtr_node_enqueue;
+
+		if (ipc->state > QRTR_STATE_INIT && ipc->state != node->nid)
+			ipc->state = QRTR_STATE_MULTI;
+		else if (ipc->state == QRTR_STATE_INIT)
+			ipc->state = node->nid;
 	}
 
 	plen = (len + 3) & ~3;
 	skb = sock_alloc_send_skb(sk, plen + QRTR_HDR_MAX_SIZE,
 				  msg->msg_flags & MSG_DONTWAIT, &rc);
 	if (!skb) {
-		rc = -ENOMEM;
 		QRTR_INFO_NEW(qrtr_ilc, " skb alloc failed in qrtr_resume_tx");
 		goto out_node;
 	}
@@ -1795,7 +1786,6 @@ static int qrtr_recvmsg(struct socket *sock, struct msghdr *msg,
 		 */
 		memset(addr, 0, sizeof(*addr));
 
-		cb = (struct qrtr_cb *)skb->cb;
 		addr->sq_family = AF_QIPCRTR;
 		addr->sq_node = cb->src_node;
 		addr->sq_port = cb->src_port;

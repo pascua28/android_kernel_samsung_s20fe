@@ -161,19 +161,15 @@ static int gfs2_check_sb(struct gfs2_sbd *sdp, int silent)
 		return -EINVAL;
 	}
 
-	if (sb->sb_fs_format != GFS2_FORMAT_FS ||
-	    sb->sb_multihost_format != GFS2_FORMAT_MULTI) {
-		fs_warn(sdp, "Unknown on-disk format, unable to mount\n");
-		return -EINVAL;
-	}
+	/*  If format numbers match exactly, we're done.  */
 
-	if (sb->sb_bsize < 512 || sb->sb_bsize > PAGE_SIZE ||
-	    (sb->sb_bsize & (sb->sb_bsize - 1))) {
-		pr_warn("Invalid superblock size\n");
-		return -EINVAL;
-	}
+	if (sb->sb_fs_format == GFS2_FORMAT_FS &&
+	    sb->sb_multihost_format == GFS2_FORMAT_MULTI)
+		return 0;
 
-	return 0;
+	fs_warn(sdp, "Unknown on-disk format, unable to mount\n");
+
+	return -EINVAL;
 }
 
 static void end_bio_io_page(struct bio *bio)
@@ -907,7 +903,7 @@ fail:
 }
 
 static const match_table_t nolock_tokens = {
-	{ Opt_jid, "jid=%d", },
+	{ Opt_jid, "jid=%d\n", },
 	{ Opt_err, NULL },
 };
 
@@ -1164,17 +1160,7 @@ static int fill_super(struct super_block *sb, struct gfs2_args *args, int silent
 		goto fail_per_node;
 	}
 
-	if (sb_rdonly(sb)) {
-		struct gfs2_holder freeze_gh;
-
-		error = gfs2_glock_nq_init(sdp->sd_freeze_gl, LM_ST_SHARED,
-					   GL_EXACT, &freeze_gh);
-		if (error) {
-			fs_err(sdp, "can't make FS RO: %d\n", error);
-			goto fail_per_node;
-		}
-		gfs2_glock_dq_uninit(&freeze_gh);
-	} else {
+	if (!sb_rdonly(sb)) {
 		error = gfs2_make_fs_rw(sdp);
 		if (error) {
 			fs_err(sdp, "can't make FS RW: %d\n", error);

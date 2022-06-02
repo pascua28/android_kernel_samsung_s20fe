@@ -262,14 +262,13 @@ EXPORT_SYMBOL_GPL(i2c_recover_bus);
 static void i2c_init_recovery(struct i2c_adapter *adap)
 {
 	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	char *err_str, *err_level = KERN_ERR;
+	char *err_str;
 
 	if (!bri)
 		return;
 
 	if (!bri->recover_bus) {
-		err_str = "no suitable method provided";
-		err_level = KERN_DEBUG;
+		err_str = "no recover_bus() found";
 		goto err;
 	}
 
@@ -299,7 +298,7 @@ static void i2c_init_recovery(struct i2c_adapter *adap)
 
 	return;
  err:
-	dev_printk(err_level, &adap->dev, "Not using recovery: %s\n", err_str);
+	dev_err(&adap->dev, "Not using recovery: %s\n", err_str);
 	adap->bus_recovery_info = NULL;
 }
 
@@ -1293,8 +1292,8 @@ static int i2c_register_adapter(struct i2c_adapter *adap)
 
 	/* create pre-declared device nodes */
 	of_i2c_register_devices(adap);
-	i2c_acpi_install_space_handler(adap);
 	i2c_acpi_register_devices(adap);
+	i2c_acpi_install_space_handler(adap);
 
 	if (adap->nr < __i2c_first_dynamic_bus_num)
 		i2c_scan_static_board_info(adap);

@@ -154,12 +154,10 @@ static struct dst_entry *rxe_find_route6(struct net_device *ndev,
 	memcpy(&fl6.daddr, daddr, sizeof(*daddr));
 	fl6.flowi6_proto = IPPROTO_UDP;
 
-	ndst = ipv6_stub->ipv6_dst_lookup_flow(sock_net(recv_sockets.sk6->sk),
-					       recv_sockets.sk6->sk, &fl6,
-					       NULL);
-	if (unlikely(IS_ERR(ndst))) {
+	if (unlikely(ipv6_stub->ipv6_dst_lookup(sock_net(recv_sockets.sk6->sk),
+						recv_sockets.sk6->sk, &ndst, &fl6))) {
 		pr_err_ratelimited("no route to %pI6\n", daddr);
-		return NULL;
+		goto put;
 	}
 
 	if (unlikely(ndst->error)) {
@@ -500,11 +498,6 @@ int rxe_send(struct rxe_pkt_info *pkt, struct sk_buff *skb)
 
 void rxe_loopback(struct sk_buff *skb)
 {
-	if (skb->protocol == htons(ETH_P_IP))
-		skb_pull(skb, sizeof(struct iphdr));
-	else
-		skb_pull(skb, sizeof(struct ipv6hdr));
-
 	rxe_rcv(skb);
 }
 

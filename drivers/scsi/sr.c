@@ -748,7 +748,7 @@ static int sr_probe(struct device *dev)
 	cd->cdi.disk = disk;
 
 	if (register_cdrom(&cd->cdi))
-		goto fail_minor;
+		goto fail_put;
 
 	/*
 	 * Initialize block layer runtime PM stuffs before the
@@ -758,7 +758,7 @@ static int sr_probe(struct device *dev)
 
 	dev_set_drvdata(dev, cd);
 	disk->flags |= GENHD_FL_REMOVABLE;
-	device_add_disk(&sdev->sdev_gendev, disk, NULL);
+	device_add_disk(&sdev->sdev_gendev, disk);
 
 	sdev_printk(KERN_DEBUG, sdev,
 		    "Attached scsi CD-ROM %s\n", cd->cdi.name);
@@ -766,10 +766,6 @@ static int sr_probe(struct device *dev)
 
 	return 0;
 
-fail_minor:
-	spin_lock(&sr_index_lock);
-	clear_bit(minor, sr_index_bits);
-	spin_unlock(&sr_index_lock);
 fail_put:
 	put_disk(disk);
 fail_free:
