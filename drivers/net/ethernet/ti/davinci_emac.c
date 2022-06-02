@@ -426,20 +426,8 @@ static int emac_set_coalesce(struct net_device *ndev,
 	u32 int_ctrl, num_interrupts = 0;
 	u32 prescale = 0, addnl_dvdr = 1, coal_intvl = 0;
 
-	if (!coal->rx_coalesce_usecs) {
-		priv->coal_intvl = 0;
-
-		switch (priv->version) {
-		case EMAC_VERSION_2:
-			emac_ctrl_write(EMAC_DM646X_CMINTCTRL, 0);
-			break;
-		default:
-			emac_ctrl_write(EMAC_CTRL_EWINTTCNT, 0);
-			break;
-		}
-
-		return 0;
-	}
+	if (!coal->rx_coalesce_usecs)
+		return -EINVAL;
 
 	coal_intvl = coal->rx_coalesce_usecs;
 
@@ -1252,7 +1240,7 @@ static int emac_poll(struct napi_struct *napi, int budget)
 	struct net_device *ndev = priv->ndev;
 	struct device *emac_dev = &ndev->dev;
 	u32 status = 0;
-	u32 num_rx_pkts = 0;
+	u32 num_tx_pkts = 0, num_rx_pkts = 0;
 
 	/* Check interrupt vectors and call packet processing */
 	status = emac_read(EMAC_MACINVECTOR);
@@ -1263,7 +1251,8 @@ static int emac_poll(struct napi_struct *napi, int budget)
 		mask = EMAC_DM646X_MAC_IN_VECTOR_TX_INT_VEC;
 
 	if (status & mask) {
-		cpdma_chan_process(priv->txchan, EMAC_DEF_TX_MAX_SERVICE);
+		num_tx_pkts = cpdma_chan_process(priv->txchan,
+					      EMAC_DEF_TX_MAX_SERVICE);
 	} /* TX processing */
 
 	mask = EMAC_DM644X_MAC_IN_VECTOR_RX_INT_VEC;

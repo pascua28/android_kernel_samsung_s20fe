@@ -1184,12 +1184,7 @@ static int proc_bulk(struct usb_dev_state *ps, void __user *arg)
 	ret = usbfs_increase_memory_usage(len1 + sizeof(struct urb));
 	if (ret)
 		return ret;
-
-	/*
-	 * len1 can be almost arbitrarily large.  Don't WARN if it's
-	 * too big, just fail the request.
-	 */
-	tbuf = kmalloc(len1, GFP_KERNEL | __GFP_NOWARN);
+	tbuf = kmalloc(len1, GFP_KERNEL);
 	if (!tbuf) {
 		ret = -ENOMEM;
 		goto done;
@@ -1637,7 +1632,7 @@ static int proc_do_submiturb(struct usb_dev_state *ps, struct usbdevfs_urb *uurb
 	if (num_sgs) {
 		as->urb->sg = kmalloc_array(num_sgs,
 					    sizeof(struct scatterlist),
-					    GFP_KERNEL | __GFP_NOWARN);
+					    GFP_KERNEL);
 		if (!as->urb->sg) {
 			ret = -ENOMEM;
 			goto error;
@@ -1672,7 +1667,7 @@ static int proc_do_submiturb(struct usb_dev_state *ps, struct usbdevfs_urb *uurb
 					(uurb_start - as->usbm->vm_start);
 		} else {
 			as->urb->transfer_buffer = kmalloc(uurb->buffer_length,
-					GFP_KERNEL | __GFP_NOWARN);
+					GFP_KERNEL);
 			if (!as->urb->transfer_buffer) {
 				ret = -ENOMEM;
 				goto error;

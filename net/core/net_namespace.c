@@ -192,9 +192,9 @@ static int net_eq_idr(int id, void *net, void *peer)
 	return 0;
 }
 
-/* Must be called from RCU-critical section or with nsid_lock held. If
- * a new id is assigned, the bool alloc is set to true, thus the
- * caller knows that the new id must be notified via rtnl.
+/* Should be called with nsid_lock held. If a new id is assigned, the bool alloc
+ * is set to true, thus the caller knows that the new id must be notified via
+ * rtnl.
  */
 static int __peernet2id_alloc(struct net *net, struct net *peer, bool *alloc)
 {
@@ -218,7 +218,7 @@ static int __peernet2id_alloc(struct net *net, struct net *peer, bool *alloc)
 	return NETNSA_NSID_NOT_ASSIGNED;
 }
 
-/* Must be called from RCU-critical section or with nsid_lock held */
+/* should be called with nsid_lock held */
 static int __peernet2id(struct net *net, struct net *peer)
 {
 	bool no = false;
@@ -261,10 +261,9 @@ int peernet2id(struct net *net, struct net *peer)
 {
 	int id;
 
-	rcu_read_lock();
+	spin_lock_bh(&net->nsid_lock);
 	id = __peernet2id(net, peer);
-	rcu_read_unlock();
-
+	spin_unlock_bh(&net->nsid_lock);
 	return id;
 }
 EXPORT_SYMBOL(peernet2id);
@@ -599,18 +598,6 @@ void __put_net(struct net *net)
 }
 EXPORT_SYMBOL_GPL(__put_net);
 
-/**
- * get_net_ns - increment the refcount of the network namespace
- * @ns: common namespace (net)
- *
- * Returns the net's common namespace.
- */
-struct ns_common *get_net_ns(struct ns_common *ns)
-{
-	return &get_net(container_of(ns, struct net, ns))->ns;
-}
-EXPORT_SYMBOL_GPL(get_net_ns);
-
 struct net *get_net_ns_by_fd(int fd)
 {
 	struct file *file;
@@ -838,7 +825,6 @@ struct rtnl_net_dump_cb {
 	int s_idx;
 };
 
-/* Runs in RCU-critical section. */
 static int rtnl_net_dumpid_one(int id, void *peer, void *data)
 {
 	struct rtnl_net_dump_cb *net_cb = (struct rtnl_net_dump_cb *)data;
@@ -869,9 +855,9 @@ static int rtnl_net_dumpid(struct sk_buff *skb, struct netlink_callback *cb)
 		.s_idx = cb->args[0],
 	};
 
-	rcu_read_lock();
+	spin_lock_bh(&net->nsid_lock);
 	idr_for_each(&net->netns_ids, rtnl_net_dumpid_one, &net_cb);
-	rcu_read_unlock();
+	spin_unlock_bh(&net->nsid_lock);
 
 	cb->args[0] = net_cb.idx;
 	return skb->len;

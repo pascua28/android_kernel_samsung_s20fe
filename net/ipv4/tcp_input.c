@@ -630,12 +630,10 @@ static inline void tcp_rcv_rtt_measure_ts(struct sock *sk,
 		u32 delta = tcp_time_stamp(tp) - tp->rx_opt.rcv_tsecr;
 		u32 delta_us;
 
-		if (likely(delta < INT_MAX / (USEC_PER_SEC / TCP_TS_HZ))) {
-			if (!delta)
-				delta = 1;
-			delta_us = delta * (USEC_PER_SEC / TCP_TS_HZ);
-			tcp_rcv_rtt_update(tp, delta_us, 0);
-		}
+		if (!delta)
+			delta = 1;
+		delta_us = delta * (USEC_PER_SEC / TCP_TS_HZ);
+		tcp_rcv_rtt_update(tp, delta_us, 0);
 	}
 }
 
@@ -1256,7 +1254,7 @@ static u8 tcp_sacktag_one(struct sock *sk,
 	if (dup_sack && (sacked & TCPCB_RETRANS)) {
 		if (tp->undo_marker && tp->undo_retrans > 0 &&
 		    after(end_seq, tp->undo_marker))
-			tp->undo_retrans = max_t(int, 0, tp->undo_retrans - pcount);
+			tp->undo_retrans--;
 		if ((sacked & TCPCB_SACKED_ACKED) &&
 		    before(start_seq, state->reord))
 				state->reord = start_seq;
@@ -3000,11 +2998,9 @@ static bool tcp_ack_update_rtt(struct sock *sk, const int flag,
 	if (seq_rtt_us < 0 && tp->rx_opt.saw_tstamp && tp->rx_opt.rcv_tsecr &&
 	    flag & FLAG_ACKED) {
 		u32 delta = tcp_time_stamp(tp) - tp->rx_opt.rcv_tsecr;
+		u32 delta_us = delta * (USEC_PER_SEC / TCP_TS_HZ);
 
-		if (likely(delta < INT_MAX / (USEC_PER_SEC / TCP_TS_HZ))) {
-			seq_rtt_us = delta * (USEC_PER_SEC / TCP_TS_HZ);
-			ca_rtt_us = seq_rtt_us;
-		}
+		seq_rtt_us = ca_rtt_us = delta_us;
 	}
 	rs->rtt_us = ca_rtt_us; /* RTT of last (S)ACKed packet (or -1) */
 	if (seq_rtt_us < 0)

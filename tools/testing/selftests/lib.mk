@@ -26,7 +26,6 @@ include $(top_srcdir)/scripts/subarch.include
 ARCH		?= $(SUBARCH)
 
 .PHONY: khdr
-.NOTPARALLEL:
 khdr:
 	make ARCH=$(ARCH) -C $(top_srcdir) headers_install
 
