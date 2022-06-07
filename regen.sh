@@ -3,7 +3,7 @@
 export ARCH=arm64
 mkdir out
 
-KERNEL_LLVM=clang
+KERNEL_LLVM=clang-12
 KERNEL_MAKE_ENV="DTC_EXT=$(pwd)/tools/dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y"
 
 scripts/configcleaner "
