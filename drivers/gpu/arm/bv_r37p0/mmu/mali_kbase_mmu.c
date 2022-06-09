@@ -46,6 +46,8 @@
 #include <mali_kbase_hwaccess_jm.h>
 #endif
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 #include <mali_kbase_trace_gpu_mem.h>
 #include <backend/gpu/mali_kbase_pm_internal.h>
 
@@ -219,7 +221,11 @@ static void kbase_mmu_sync_pgd(struct kbase_device *kbdev,
 	/* In non-coherent system, ensure the GPU can read
 	 * the pages from memory
 	 */
+#if IS_ENABLED(CONFIG_MALI_EXYNOS_LLC)
+	if (kbdev->system_coherency != COHERENCY_ACE)
+#else
 	if (kbdev->system_coherency == COHERENCY_NONE)
+#endif
 		dma_sync_single_for_device(kbdev->dev, handle, size,
 				DMA_TO_DEVICE);
 }
@@ -1960,6 +1966,10 @@ kbase_mmu_flush_invalidate(struct kbase_context *kctx, u64 vpfn, size_t nr,
 
 	/* Early out if there is nothing to do */
 	if (nr == 0)
+		return;
+
+	/* MALI_SEC_INTEGRATION */
+	if (!mali_exynos_get_gpu_power_state())
 		return;
 
 	kbdev = kctx->kbdev;

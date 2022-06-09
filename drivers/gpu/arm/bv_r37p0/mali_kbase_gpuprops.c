@@ -34,6 +34,7 @@
 #include <linux/of_platform.h>
 #include <linux/moduleparam.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
 
 static void kbase_gpuprops_construct_coherent_groups(
 	struct base_gpu_props * const props)
@@ -506,6 +507,10 @@ int kbase_gpuprops_set_features(struct kbase_device *kbdev)
 
 	if (!kbase_hw_has_feature(kbdev, BASE_HW_FEATURE_THREAD_GROUP_SPLIT))
 		gpu_props->thread_props.max_thread_group_split = 0;
+
+	/* EXYNOS TODO: this is only called once during init. may be there's a better place for this call? */
+	mali_exynos_llc_set_awuser();
+	mali_exynos_llc_set_aruser();
 
 	return err;
 }

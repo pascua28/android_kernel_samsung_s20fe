@@ -22,13 +22,19 @@
 #include "backend/gpu/mali_kbase_cache_policy_backend.h"
 #include <device/mali_kbase_device.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
 
 void kbase_cache_set_coherency_mode(struct kbase_device *kbdev,
 		u32 mode)
 {
+	mali_exynos_coherency_set_coherency_feature();
+
 	kbdev->current_gpu_coherency_mode = mode;
 
 		kbase_reg_write(kbdev, COHERENCY_ENABLE, mode);
+
+	mali_exynos_llc_set_awuser();
+	mali_exynos_llc_set_aruser();
 }
 
 u32 kbase_cache_get_coherency_features(struct kbase_device *kbdev)
