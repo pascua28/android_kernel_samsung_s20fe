@@ -9084,7 +9084,7 @@ static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
 }
 
 #ifdef MSM_PLATFORM
-#define COPY_CPU_MASK(a, b) atomic_set(a, *cpumask_bits(b))
+#define COPY_CPU_MASK(a, b) cpumask_copy(a, b)
 #define DUMP_CPU_AFFINE() hdd_info("Set cpu_mask %*pb for affine_cores", \
 			cpumask_pr_args(&hdd_ctx->pm_qos_req.cpus_affine))
 #else

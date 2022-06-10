@@ -4188,6 +4188,7 @@ static int fastrpc_internal_control(struct fastrpc_file *fl,
 {
 	int err = 0;
 	unsigned int latency;
+	cpumask_t mask;
 	struct fastrpc_apps *me = &gfa;
 	u32 len = me->silvercores.corecount, i = 0;
 
@@ -4205,10 +4206,11 @@ static int fastrpc_internal_control(struct fastrpc_file *fl,
 		VERIFY(err, latency != 0);
 		if (err)
 			goto bail;
-		fl->pm_qos_req.cpus_affine = 0;
+		cpumask_clear(&mask);
 		for (i = 0; i < len; i++)
-			fl->pm_qos_req.cpus_affine |= BIT(me->silvercores.coreno[i]);
+			cpumask_set_cpu(me->silvercores.coreno[i], &mask);
 		fl->pm_qos_req.type = PM_QOS_REQ_AFFINE_CORES;
+		cpumask_copy(&fl->pm_qos_req.cpus_affine, &mask);
 
 		if (!fl->qos_request) {
 			pm_qos_add_request(&fl->pm_qos_req,
