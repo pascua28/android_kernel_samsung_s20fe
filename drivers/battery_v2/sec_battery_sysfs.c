@@ -3483,7 +3483,7 @@ ssize_t sec_bat_store_attrs(
 				battery->batt_full_capacity = 100;
 			}
 
-			__pm_stay_awake(battery->monitor_wake_lock);
+			wake_lock(&battery->monitor_wake_lock);
 			queue_delayed_work(battery->monitor_wqueue,
 				&battery->monitor_work, msecs_to_jiffies(100));
 
