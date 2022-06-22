@@ -3485,7 +3485,7 @@ ssize_t sec_bat_store_attrs(
 
 			__pm_stay_awake(battery->monitor_wake_lock);
 			queue_delayed_work(battery->monitor_wqueue,
-				&battery->monitor_work, 0);
+				&battery->monitor_work, msecs_to_jiffies(100));
 
 			ret = count;
 		}
