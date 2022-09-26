@@ -23,6 +23,7 @@
 		power-domains = <&pd_embedded_g3d>;
 		g3d_genpd_name = "pd-embedded_g3d";
 		#cooling-cells = <2>; /* min followed by max */
+		power_policy = "adaptive";
 		governor = "interactive";
 		interactive_info = <377000 94 0>;
 		gpu_dvfs_table_size = <8 8>; /*<row col>*/

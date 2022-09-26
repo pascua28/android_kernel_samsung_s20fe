@@ -1783,6 +1783,7 @@
         interrupt-names = "JOB", "MMU", "GPU";
         g3d_cmu_cal_id = <ACPM_DVFS_G3D>;
 	power-domains = <&pd_embedded_g3d>;
+	power_policy = "adaptive";
         #cooling-cells = <2>; /* min followed by max */
 		governor = "dynamic";
 		interactive_info = <377000 94 0>;
