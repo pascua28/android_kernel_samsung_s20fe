@@ -11491,12 +11491,12 @@
 
 			coregroup1 {
 				coverage-ratio = <0x1e>;
-				active-ratio = <0x64>;
+				active-ratio = <0x70>;
 			};
 
 			coregroup2 {
 				coverage-ratio = <0x1e>;
-				active-ratio = <0x64>;
+				active-ratio = <0x8a>;
 			};
 		};
 
@@ -11508,13 +11508,13 @@
 			};
 
 			coregroup1 {
-				active-ratio-limit = <0x30>;
-				active-ratio-boost = <0x23>;
+				active-ratio-limit = <0x1a>;
+				active-ratio-boost = <0x15>;
 			};
 
 			coregroup2 {
-				active-ratio-limit = <0x1e>;
-				active-ratio-boost = <0x00>;
+				active-ratio-limit = <0x10>;
+				active-ratio-boost = <0x05>;
 			};
 		};
 
@@ -14428,7 +14428,7 @@
 			shared-cpus = "0-3";
 			pm_qos-min-class = <0x03>;
 			pm_qos-max-class = <0x04>;
-			step = <0x0a>;
+			step = <0x1a>;
 			patient_mode = <0x00>;
 		};
 
@@ -14437,7 +14437,7 @@
 			shared-cpus = "4-5";
 			pm_qos-min-class = <0x05>;
 			pm_qos-max-class = <0x06>;
-			step = <0x08>;
+			step = <0x2a>;
 			patient_mode = <0x00>;
 		};
 
@@ -14446,7 +14446,7 @@
 			shared-cpus = "6-7";
 			pm_qos-min-class = <0x07>;
 			pm_qos-max-class = <0x08>;
-			step = <0x0a>;
+			step = <0x2a>;
 			patient_mode = <0x00>;
 		};
 	};
@@ -14456,7 +14456,7 @@
 		domain@0 {
 			device_type = "schedutil-domain";
 			shared-cpus = "0-3";
-			enabled = <0x00>;
+			enabled = <0x01>;
 			qos_min_class = <0x03>;
 			phandle = <0x32e>;
 		};
@@ -14468,6 +14468,16 @@
 			expired_time = <0x50>;
 			qos_min_class = <0x05>;
 			phandle = <0x32f>;
+		};
+
+		/* added by XDA@nalas */
+		domain@2 {
+			device_type = "schedutil-domain";
+			shared-cpus = "6-7";
+			enabled = <0x01>;   // 0x01
+			expired_time = <0x50>;
+			qos_min_class = <0x05>;
+			phandle = <0x361>;
 		};
 	};
 
@@ -14482,7 +14492,7 @@
 			min-freq = <0x6be90>;
 			pm_qos-min-class = <0x03>;
 			pm_qos-max-class = <0x04>;
-			user-default-qos = <0xc4c70>;
+			user-default-qos = <0x101148>;
 			user-boost = <0x00>;
 			#cooling-cells = <0x02>;
 			phandle = <0x143>;
@@ -14511,7 +14521,7 @@
 			min-freq = <0x7bc78>;
 			pm_qos-min-class = <0x05>;
 			pm_qos-max-class = <0x06>;
-			user-default-qos = <0xce4c8>;
+			user-default-qos = <0x101148>;
 			user-boost = <0x01>;
 			#cooling-cells = <0x02>;
 			phandle = <0x144>;
@@ -14550,7 +14560,7 @@
 			pm_qos-min-class = <0x07>;
 			pm_qos-max-class = <0x08>;
 			pm_qos-booting = <0x1e8c50>;
-			user-default-qos = <0xeadd0>;
+			user-default-qos = <0x104410>;
 			user-boost = <0x02>;
 			#cooling-cells = <0x02>;
 			phandle = <0x145>;
@@ -15873,10 +15883,10 @@
 		tmu_name = "BIG";
 		id = <0x00>;
 		sensors = <0x3e>;
-		sensing_mode = "balance";
+		sensing_mode = "max";
 		hotplug_enable = <0x01>;
-		hotplug_in_threshold = <0x5b>;
-		hotplug_out_threshold = <0x60>;
+		hotplug_in_threshold = <0x50>;
+		hotplug_out_threshold = <0x70>;
 		#thermal-sensor-cells = <0x00>;
 		phandle = <0x172>;
 	};
@@ -15912,7 +15922,7 @@
 		tmu_name = "G3D";
 		id = <0x03>;
 		sensors = <0x3d>;
-		sensing_mode = "balance";
+		sensing_mode = "max";
 		#thermal-sensor-cells = <0x00>;
 		phandle = <0x17f>;
 	};
