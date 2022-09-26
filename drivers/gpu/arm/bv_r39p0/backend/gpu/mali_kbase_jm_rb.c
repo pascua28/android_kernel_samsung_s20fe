@@ -37,6 +37,8 @@
 #include <backend/gpu/mali_kbase_jm_internal.h>
 #include <backend/gpu/mali_kbase_pm_internal.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 /**
  * SLOT_RB_EMPTY - Return whether the specified ringbuffer is empty.
  *
@@ -567,6 +569,12 @@ static int kbase_jm_enter_protected_mode(struct kbase_device *kbdev,
 {
 	int err = 0;
 
+	err = mali_exynos_legacy_jm_enter_protected_mode(kbdev);
+	if (-ENOSYS == err)
+		err = 0;
+	else
+		return err;
+
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 
 	switch (katom[idx]->protected_state.enter) {
@@ -741,6 +749,12 @@ static int kbase_jm_exit_protected_mode(struct kbase_device *kbdev,
 		struct kbase_jd_atom **katom, int idx, int js)
 {
 	int err = 0;
+
+	err = mali_exynos_legacy_jm_exit_protected_mode(kbdev);
+	if (-ENOSYS == err)
+		err = 0;
+	else
+		return err;
 
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 

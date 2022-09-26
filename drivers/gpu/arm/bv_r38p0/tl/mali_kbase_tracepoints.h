@@ -399,7 +399,6 @@ void __kbase_tlstream_tl_kbase_new_device(
 void __kbase_tlstream_tl_kbase_device_program_csg(
 	struct kbase_tlstream *stream,
 	u32 kbase_device_id,
-	u32 kernel_ctx_id,
 	u32 gpu_cmdq_grp_handle,
 	u32 kbase_device_csg_slot_index,
 	u32 kbase_device_csg_slot_resumed
@@ -1995,7 +1994,6 @@ struct kbase_tlstream;
 #define KBASE_TLSTREAM_TL_KBASE_DEVICE_PROGRAM_CSG(	\
 	kbdev,	\
 	kbase_device_id,	\
-	kernel_ctx_id,	\
 	gpu_cmdq_grp_handle,	\
 	kbase_device_csg_slot_index,	\
 	kbase_device_csg_slot_resumed	\
@@ -2006,7 +2004,6 @@ struct kbase_tlstream;
 			__kbase_tlstream_tl_kbase_device_program_csg(	\
 				__TL_DISPATCH_STREAM(kbdev, obj),	\
 				kbase_device_id,	\
-				kernel_ctx_id,	\
 				gpu_cmdq_grp_handle,	\
 				kbase_device_csg_slot_index,	\
 				kbase_device_csg_slot_resumed	\
@@ -2016,7 +2013,6 @@ struct kbase_tlstream;
 #define KBASE_TLSTREAM_TL_KBASE_DEVICE_PROGRAM_CSG(	\
 	kbdev,	\
 	kbase_device_id,	\
-	kernel_ctx_id,	\
 	gpu_cmdq_grp_handle,	\
 	kbase_device_csg_slot_index,	\
 	kbase_device_csg_slot_resumed	\

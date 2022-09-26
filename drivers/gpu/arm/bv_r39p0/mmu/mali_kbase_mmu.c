@@ -49,6 +49,8 @@
 #include <mali_kbase_trace_gpu_mem.h>
 #include <backend/gpu/mali_kbase_pm_internal.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 /* Threshold used to decide whether to flush full caches or just a physical range */
 #define KBASE_PA_RANGE_THRESHOLD_NR_PAGES 20
 #define MGM_DEFAULT_PTE_GROUP (0)
@@ -336,7 +338,11 @@ static void kbase_mmu_sync_pgd_cpu(struct kbase_device *kbdev, dma_addr_t handle
 	/* In non-coherent system, ensure the GPU can read
 	 * the pages from memory
 	 */
+#if IS_ENABLED(CONFIG_MALI_EXYNOS_LLC)
+	if (kbdev->system_coherency != COHERENCY_ACE)
+#else
 	if (kbdev->system_coherency == COHERENCY_NONE)
+#endif
 		dma_sync_single_for_device(kbdev->dev, handle, size,
 				DMA_TO_DEVICE);
 }
@@ -2099,6 +2105,10 @@ static void kbase_mmu_flush_noretain(struct kbase_context *kctx, u64 vpfn, size_
 
 	/* Early out if there is nothing to do */
 	if (nr == 0)
+		return;
+
+	/* MALI_SEC_INTEGRATION */
+	if (!mali_exynos_get_gpu_power_state())
 		return;
 
 	/* flush L2 and unlock the VA (resumes the MMU) */
