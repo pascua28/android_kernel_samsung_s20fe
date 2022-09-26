@@ -60,10 +60,12 @@
  * - Dummy model (no mali) backend will now clear HWC values after each sample
  * 1.12:
  * - Added support for incremental rendering flag in CSG create call
+ * 1.13:
+ * - Added ioctl to query a register of USER page.
  */
 
 #define BASE_UK_VERSION_MAJOR 1
-#define BASE_UK_VERSION_MINOR 12
+#define BASE_UK_VERSION_MINOR 13
 
 /**
  * struct kbase_ioctl_version_check - Check version compatibility between
@@ -486,6 +488,29 @@ union kbase_ioctl_mem_alloc_ex {
 };
 
 #define KBASE_IOCTL_MEM_ALLOC_EX _IOWR(KBASE_IOCTL_TYPE, 59, union kbase_ioctl_mem_alloc_ex)
+
+/**
+ * union kbase_ioctl_read_user_page - Read a register of USER page
+ *
+ * @in:               Input parameters.
+ * @in.offset:        Register offset in USER page.
+ * @in.padding:       Padding to round up to a multiple of 8 bytes, must be zero.
+ * @out:              Output parameters.
+ * @out.val_lo:       Value of 32bit register or the 1st half of 64bit register to be read.
+ * @out.val_hi:       Value of the 2nd half of 64bit register to be read.
+ */
+union kbase_ioctl_read_user_page {
+	struct {
+		__u32 offset;
+		__u32 padding;
+	} in;
+	struct {
+		__u32 val_lo;
+		__u32 val_hi;
+	} out;
+};
+
+#define KBASE_IOCTL_READ_USER_PAGE _IOWR(KBASE_IOCTL_TYPE, 60, union kbase_ioctl_read_user_page)
 
 /***************
  * test ioctls *
